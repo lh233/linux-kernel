@@ -1,0 +1,58 @@
+diff --git a/kernel/drivers/gpio/gpiolib.c b/kernel/drivers/gpio/gpiolib.c
+index a35c5b9..8351381 100644
+--- a/kernel/drivers/gpio/gpiolib.c
++++ b/kernel/drivers/gpio/gpiolib.c
+@@ -60,6 +60,8 @@ struct gpio_desc {
+ #define FLAG_ACTIVE_LOW	6	/* sysfs value has active low */
+ #define FLAG_OPEN_DRAIN	7	/* Gpio is open drain type */
+ #define FLAG_OPEN_SOURCE 8	/* Gpio is open source type */
++#define FLAG_USED_AS_IRQ 9	/* GPIO is connected to an IRQ */
++
+ 
+ #define ID_SHIFT	16	/* add new flags before this one */
+ 
+@@ -2044,6 +2046,44 @@ void gpio_set_value_cansleep(unsigned gpio, int value)
+ }
+ EXPORT_SYMBOL_GPL(gpio_set_value_cansleep);
+ 
++/**
++* gpio_lock_as_irq() - lock a GPIO to be used as IRQ
++*@chip: the chip the GPIO to lock belongs to
++*@offset: the offset of the GPIO to lock as IRQ
++*
++* This is used directly by GPIO drivers that want to lock down
++* a certain GPIO line to be used for IRQs.
++*/
++int gpio_lock_as_irq(struct gpio_chip *chip, unsigned long offset)
++{
++	if (offset >= chip->ngpio)
++		return -EINVAL;
++
++	if(test_bit(FLAG_IS_OUT, &chip->desc[offset].flags)){
++		pr_err("%s: tried to flag a GPIO set as output for IRQ\n",
++			__func__);
++		return -EIO;
++	}
++
++
++	set_bit(FLAG_USED_AS_IRQ, &chip->desc[offset].flags);
++	return 0;
++}
++EXPORT_SYMBOL_GPL(gpio_lock_as_irq);
++
++
++
++
++void gpio_unlock_as_irq(struct gpio_chip *chip, unsigned long offset)
++{
++	if (offset >= chip->ngpio)
++			return;
++	clear_bit(FLAG_USED_AS_IRQ, &chip->desc[offset].flags);
++}
++
++EXPORT_SYMBOL_GPL(gpio_unlock_as_irq);
++
++
+ #ifdef CONFIG_DEBUG_FS
+ 
+ static void gpiolib_dbg_show(struct seq_file *s, struct gpio_chip *chip)
