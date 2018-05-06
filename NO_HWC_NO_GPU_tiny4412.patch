@@ -1,0 +1,119 @@
+diff -urN android-5.0.2/device/friendly-arm/tiny4412/system.prop android-5.0.2_no_hwc_no_gpu/device/friendly-arm/tiny4412/system.prop
+--- android-5.0.2/device/friendly-arm/tiny4412/system.prop	2015-03-25 10:09:16.000000000 +0800
++++ android-5.0.2_no_hwc_no_gpu/device/friendly-arm/tiny4412/system.prop	2017-07-02 02:23:22.012191623 +0800
+@@ -23,3 +23,7 @@
+ # persist.data_netmgrd_nint=8
+ # ro.ril.def.agps.mode=0
+ # keyguard.no_require_sim=true 
++
++ro.kernel.qemu=1
++ro.kernel.qemu.gles=0
++
+diff -urN android-5.0.2/frameworks/native/opengl/libagl/Android.mk android-5.0.2_no_hwc_no_gpu/frameworks/native/opengl/libagl/Android.mk
+--- android-5.0.2/frameworks/native/opengl/libagl/Android.mk	2015-03-25 10:09:55.000000000 +0800
++++ android-5.0.2_no_hwc_no_gpu/frameworks/native/opengl/libagl/Android.mk	2017-07-02 02:21:16.468191577 +0800
+@@ -21,7 +21,7 @@
+ 	mipmap.cpp.arm		        \
+ 	primitives.cpp.arm	        \
+ 	vertex.cpp.arm
+-
++LOCAL_MODULE_TAGS := eng
+ LOCAL_CFLAGS += -DLOG_TAG=\"libagl\"
+ LOCAL_CFLAGS += -DGL_GLEXT_PROTOTYPES -DEGL_EGLEXT_PROTOTYPES
+ LOCAL_CFLAGS += -fvisibility=hidden
+diff -urN android-5.0.2/hardware/libhardware/modules/gralloc/framebuffer.cpp android-5.0.2_no_hwc_no_gpu/hardware/libhardware/modules/gralloc/framebuffer.cpp
+--- android-5.0.2/hardware/libhardware/modules/gralloc/framebuffer.cpp	2015-03-25 10:09:56.000000000 +0800
++++ android-5.0.2_no_hwc_no_gpu/hardware/libhardware/modules/gralloc/framebuffer.cpp	2017-07-02 00:19:49.596188937 +0800
+@@ -104,11 +104,20 @@
+         const size_t offset = hnd->base - m->framebuffer->base;
+         m->info.activate = FB_ACTIVATE_VBL;
+         m->info.yoffset = offset / m->finfo.line_length;
++#if 0
+         if (ioctl(m->framebuffer->fd, FBIOPUT_VSCREENINFO, &m->info) == -1) {
+             ALOGE("FBIOPUT_VSCREENINFO failed");
+             m->base.unlock(&m->base, buffer); 
+             return -errno;
+         }
++#else
++		if (ioctl(m->framebuffer->fd, FBIOPAN_DISPLAY, &m->info) == -1) {
++			ALOGE("FBIOPAN_DISPLAY failed");
++			m->base.unlock(&m->base, buffer); 
++			return -errno;
++		}
++#endif		
++		
+         m->currentBuffer = buffer;
+         
+     } else {
+@@ -178,13 +187,15 @@
+     info.yoffset = 0;
+     info.activate = FB_ACTIVATE_NOW;
+ 
++    uint32_t flags = PAGE_FLIP;
++	
++#if 0
+     /*
+      * Request NUM_BUFFERS screens (at lest 2 for page flipping)
+      */
+     info.yres_virtual = info.yres * NUM_BUFFERS;
+ 
+ 
+-    uint32_t flags = PAGE_FLIP;
+ #if USE_PAN_DISPLAY
+     if (ioctl(fd, FBIOPAN_DISPLAY, &info) == -1) {
+         ALOGW("FBIOPAN_DISPLAY failed, page flipping not supported");
+@@ -195,6 +206,16 @@
+         info.yres_virtual = info.yres;
+         flags &= ~PAGE_FLIP;
+     }
++#endif
++
++    if (ioctl(fd, FBIOGET_VSCREENINFO, &info) == -1)
++        return -errno;
++	info.yres_virtual = info.yres_virtual;
++	if (info.yres_virtual > info.yres)
++		flags |= PAGE_FLIP;
++	else
++		flags &= ~PAGE_FLIP;
++	
+ 
+     if (info.yres_virtual < info.yres * 2) {
+         // we need at least 2 for page-flipping
+@@ -204,8 +225,6 @@
+                 info.yres_virtual, info.yres*2);
+     }
+ 
+-    if (ioctl(fd, FBIOGET_VSCREENINFO, &info) == -1)
+-        return -errno;
+ 
+     uint64_t  refreshQuotient =
+     (
+@@ -342,7 +361,7 @@
+         if (status >= 0) {
+             int stride = m->finfo.line_length / (m->info.bits_per_pixel >> 3);
+             int format = (m->info.bits_per_pixel == 32)
+-                         ? (m->info.red.offset ? HAL_PIXEL_FORMAT_BGRA_8888 : HAL_PIXEL_FORMAT_RGBX_8888)
++                         ? (m->info.red.offset ? HAL_PIXEL_FORMAT_RGBA_8888 : HAL_PIXEL_FORMAT_RGBX_8888)
+                          : HAL_PIXEL_FORMAT_RGB_565;
+             const_cast<uint32_t&>(dev->device.flags) = 0;
+             const_cast<uint32_t&>(dev->device.width) = m->info.xres;
+diff -urN android-5.0.2/vendor/friendly-arm/tiny4412/device-tiny4412.mk android-5.0.2_no_hwc_no_gpu/vendor/friendly-arm/tiny4412/device-tiny4412.mk
+--- android-5.0.2/vendor/friendly-arm/tiny4412/device-tiny4412.mk	2015-03-25 10:11:33.000000000 +0800
++++ android-5.0.2_no_hwc_no_gpu/vendor/friendly-arm/tiny4412/device-tiny4412.mk	2017-07-02 02:22:36.780191607 +0800
+@@ -24,12 +24,12 @@
+ 
+ # gralloc, ion
+ PRODUCT_PACKAGES += \
+-	libsecion \
+-	gralloc.tiny4412
++	libsecion 
++#	gralloc.tiny4412
+ 
+ # hwcomposer
+-PRODUCT_PACKAGES += \
+-	hwcomposer.exynos4
++PRODUCT_PACKAGES += 
++#	hwcomposer.exynos4
+ 
+ # HDMI
+ PRODUCT_PACKAGES += \
