@@ -1,2153 +1,2153 @@
 diff --git a/bootable/bootloader/lk/app/tests/i2c_test.c b/bootable/bootloader/lk/app/tests/i2c_test.c
-index 6a201b2..8d2c1e3 100644
+index 8d2c1e3..6a201b2 100644
 --- a/bootable/bootloader/lk/app/tests/i2c_test.c
 +++ b/bootable/bootloader/lk/app/tests/i2c_test.c
-@@ -27,7 +27,6 @@
+@@ -27,6 +27,7 @@
   * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   */
  
--#include <debug.h>
++#include <debug.h>
  #include <i2c_qup.h>
  #include <blsp_qup.h>
  
 diff --git a/bootable/bootloader/lk/dev/fbcon/fbcon.c b/bootable/bootloader/lk/dev/fbcon/fbcon.c
-old mode 100755
-new mode 100644
-index 47f3071..607d58d
+old mode 100644
+new mode 100755
+index 607d58d..47f3071
 --- a/bootable/bootloader/lk/dev/fbcon/fbcon.c
 +++ b/bootable/bootloader/lk/dev/fbcon/fbcon.c
-@@ -482,7 +482,6 @@ void display_default_image_on_screen(void)
+@@ -482,6 +482,7 @@ void display_default_image_on_screen(void)
  	unsigned bytes_per_bpp;
  	unsigned image_base;
  
--
++
  	if (!config) {
  		dprintf(CRITICAL,"NULL configuration, image cannot be displayed\n");
  		return;
-@@ -496,7 +495,7 @@ void display_default_image_on_screen(void)
+@@ -495,7 +496,7 @@ void display_default_image_on_screen(void)
  	image_base = ((((total_y/2) - (SPLASH_IMAGE_HEIGHT / 2) - 1) *
  			(config->width)) + (total_x/2 - (SPLASH_IMAGE_WIDTH / 2)));
  
--	//24 bit bpp
-+#if DISPLAY_TYPE_MIPI
+-#if DISPLAY_TYPE_MIPI
++	//24 bit bpp
  	if (bytes_per_bpp == 3) {
  		for (i = 0; i < SPLASH_IMAGE_HEIGHT; i++) {
  			memcpy (config->base + ((image_base + (i * (config->width))) * bytes_per_bpp),
-@@ -509,7 +508,8 @@ void display_default_image_on_screen(void)
+@@ -508,8 +509,7 @@ void display_default_image_on_screen(void)
  	if(is_cmd_mode_enabled())
  		mipi_dsi_cmd_mode_trigger();
  #endif
--	//16 bit bpp
-+
-+#else
+-
+-#else
++	//16 bit bpp
  	if (bytes_per_bpp == 2) {
  		for (i = 0; i < SPLASH_IMAGE_HEIGHT; i++) {
  			memcpy (config->base + ((image_base + (i * (config->width))) * bytes_per_bpp),
-@@ -518,6 +518,7 @@ void display_default_image_on_screen(void)
+@@ -518,7 +518,6 @@ void display_default_image_on_screen(void)
  		}
  	}
  	fbcon_flush();
-+#endif
+-#endif
  }
  
  
 diff --git a/bootable/bootloader/lk/dev/gcdb/display/gcdb_display.c b/bootable/bootloader/lk/dev/gcdb/display/gcdb_display.c
-index 951d680..16a5d3e 100755
+index 16a5d3e..951d680 100755
 --- a/bootable/bootloader/lk/dev/gcdb/display/gcdb_display.c
 +++ b/bootable/bootloader/lk/dev/gcdb/display/gcdb_display.c
-@@ -216,8 +216,6 @@ bool gcdb_display_cmdline_arg(char *panel_name, char *pbuf, uint16_t buf_size)
+@@ -216,6 +216,8 @@ bool gcdb_display_cmdline_arg(char *panel_name, char *pbuf, uint16_t buf_size)
  		} else {
  			if (target_is_edp())
  				default_str = "0:edp:";
--			else if (target_is_spi())
--				default_str = "0:spi:0";
++			else if (target_is_spi())
++				default_str = "0:spi:0";
  			else
  				default_str = "0:dsi:0:";
  
-@@ -288,59 +286,6 @@ end:
+@@ -286,6 +288,59 @@ end:
  }
  
  
--static int mdss_spi_bl_enable(uint8_t enable)
--{
--	int ret = NO_ERROR;
--
--	mdelay(100);
--	ret = panel_backlight_ctrl(enable);
--	if (ret)
--		dprintf(CRITICAL, "Backlight %s failed\n", enable ? "enable" :
--							"disable");
--	return ret;
--}
--
--static int mdss_spi_panel_power(uint8_t enable,
--				struct msm_panel_info *pinfo)
--{
--	int ret = NO_ERROR;
--
--	if (enable) {
--		ret = target_ldo_ctrl(enable, pinfo);
--		if (ret) {
--			dprintf(CRITICAL, "LDO control enable failed\n");
--			return ret;
--		}
--
--		/* Panel Reset */
--		ret = target_panel_reset(enable, panelstruct.panelresetseq,
--						&panel.panel_info);
--		if (ret) {
--			dprintf(CRITICAL, "panel reset failed\n");
--			return ret;
--		}
--		dprintf(INFO, "Panel power on done\n");
--	} else {
--		/* Disable panel and ldo */
--		ret = target_panel_reset(enable, panelstruct.panelresetseq,
--						&panel.panel_info);
--		if (ret) {
--			dprintf(CRITICAL, "panel reset disable failed\n");
--			return ret;
--		}
--
--		ret = target_ldo_ctrl(enable, pinfo);
--		if (ret) {
--			dprintf(CRITICAL, "ldo control disable failed\n");
--			return ret;
--		}
--		dprintf(INFO, "Panel power off done\n");
--	}
--
--	return ret;
--}
--
--
++static int mdss_spi_bl_enable(uint8_t enable)
++{
++	int ret = NO_ERROR;
++
++	mdelay(100);
++	ret = panel_backlight_ctrl(enable);
++	if (ret)
++		dprintf(CRITICAL, "Backlight %s failed\n", enable ? "enable" :
++							"disable");
++	return ret;
++}
++
++static int mdss_spi_panel_power(uint8_t enable,
++				struct msm_panel_info *pinfo)
++{
++	int ret = NO_ERROR;
++
++	if (enable) {
++		ret = target_ldo_ctrl(enable, pinfo);
++		if (ret) {
++			dprintf(CRITICAL, "LDO control enable failed\n");
++			return ret;
++		}
++
++		/* Panel Reset */
++		ret = target_panel_reset(enable, panelstruct.panelresetseq,
++						&panel.panel_info);
++		if (ret) {
++			dprintf(CRITICAL, "panel reset failed\n");
++			return ret;
++		}
++		dprintf(INFO, "Panel power on done\n");
++	} else {
++		/* Disable panel and ldo */
++		ret = target_panel_reset(enable, panelstruct.panelresetseq,
++						&panel.panel_info);
++		if (ret) {
++			dprintf(CRITICAL, "panel reset disable failed\n");
++			return ret;
++		}
++
++		ret = target_ldo_ctrl(enable, pinfo);
++		if (ret) {
++			dprintf(CRITICAL, "ldo control disable failed\n");
++			return ret;
++		}
++		dprintf(INFO, "Panel power off done\n");
++	}
++
++	return ret;
++}
++
++
  static void init_platform_data()
  {
  	memcpy(dsi_video_mode_phy_db.regulator, panel_regulator_settings,
-@@ -456,21 +401,7 @@ int gcdb_display_init(const char *panel_name, uint32_t rev, void *base)
+@@ -401,7 +456,21 @@ int gcdb_display_init(const char *panel_name, uint32_t rev, void *base)
                  panel.power_func = mdss_edp_panel_power;
  		panel.bl_func = mdss_edp_bl_enable;
                  panel.fb.format = FB_FORMAT_RGB888;
--	} else if (pan_type == PANEL_TYPE_SPI ) {
--		panel.panel_info.xres = panelstruct.panelres->panel_width;
--		panel.panel_info.yres = panelstruct.panelres->panel_height;
--		panel.panel_info.bpp  = panelstruct.color->color_format;
--		panel.power_func = mdss_spi_panel_power;
--		panel.bl_func = mdss_spi_bl_enable;
--		panel.fb.base = base;
--		panel.fb.width =  panel.panel_info.xres;
--		panel.fb.height =  panel.panel_info.yres;
--		panel.fb.bpp =  panel.panel_info.bpp;
--		panel.fb.format = FB_FORMAT_RGB565;
--		panel.panel_info.type = SPI_PANEL;
--	}
--	
--	else {
-+	} else {
+-	} else {
++	} else if (pan_type == PANEL_TYPE_SPI ) {
++		panel.panel_info.xres = panelstruct.panelres->panel_width;
++		panel.panel_info.yres = panelstruct.panelres->panel_height;
++		panel.panel_info.bpp  = panelstruct.color->color_format;
++		panel.power_func = mdss_spi_panel_power;
++		panel.bl_func = mdss_spi_bl_enable;
++		panel.fb.base = base;
++		panel.fb.width =  panel.panel_info.xres;
++		panel.fb.height =  panel.panel_info.yres;
++		panel.fb.bpp =  panel.panel_info.bpp;
++		panel.fb.format = FB_FORMAT_RGB565;
++		panel.panel_info.type = SPI_PANEL;
++	}
++	
++	else {
  		dprintf(CRITICAL, "Target panel init not found!\n");
  		ret = ERR_NOT_SUPPORTED;
  		goto error_gcdb_display_init;
 diff --git a/bootable/bootloader/lk/dev/gcdb/display/include/panel.h b/bootable/bootloader/lk/dev/gcdb/display/include/panel.h
-index d0d6e70..a410b10 100755
+index a410b10..d0d6e70 100755
 --- a/bootable/bootloader/lk/dev/gcdb/display/include/panel.h
 +++ b/bootable/bootloader/lk/dev/gcdb/display/include/panel.h
-@@ -45,8 +45,7 @@ enum {
+@@ -45,7 +45,8 @@ enum {
  	PANEL_TYPE_UNKNOWN,
  	PANEL_TYPE_DSI,
  	PANEL_TYPE_EDP,
--	PANEL_TYPE_HDMI,
--	PANEL_TYPE_SPI
-+	PANEL_TYPE_HDMI
+-	PANEL_TYPE_HDMI
++	PANEL_TYPE_HDMI,
++	PANEL_TYPE_SPI
  };
  
  /*---------------------------------------------------------------------------*/
-@@ -159,13 +158,6 @@ typedef struct panel_timing {
+@@ -158,6 +159,13 @@ typedef struct panel_timing {
  	uint8_t tclk_pre;
  };
  
--
--typedef struct spi_panel_config {
--	uint32_t dc_gpio;
--	uint32_t spi_blsp_id;
--	uint32_t spi_qup_id;
--};
--
++
++typedef struct spi_panel_config {
++	uint32_t dc_gpio;
++	uint32_t spi_blsp_id;
++	uint32_t spi_qup_id;
++};
++
  enum {
  	BL_PWM = 0,
  	BL_WLED,
 diff --git a/bootable/bootloader/lk/platform/msm8909/acpuclock.c b/bootable/bootloader/lk/platform/msm8909/acpuclock.c
-old mode 100755
-new mode 100644
-index 9528453..413816b
+old mode 100644
+new mode 100755
+index 413816b..9528453
 --- a/bootable/bootloader/lk/platform/msm8909/acpuclock.c
 +++ b/bootable/bootloader/lk/platform/msm8909/acpuclock.c
-@@ -393,79 +393,3 @@ void gcc_dsi_clocks_enable(uint8_t pclk0_m, uint8_t pclk0_n, uint8_t pclk0_d)
+@@ -393,3 +393,79 @@ void gcc_dsi_clocks_enable(uint8_t pclk0_m, uint8_t pclk0_n, uint8_t pclk0_d)
  		ASSERT(0);
  	}
  }
--
--
--void clock_config_blsp_i2c(uint8_t blsp_id, uint8_t qup_id)
--{
--	uint8_t ret = 0;
--	char clk_name[64];
--
--	struct clk *qup_clk;
--	qup_id = qup_id + 1;
--
--	if((blsp_id != BLSP_ID_1)) {
--		dprintf(CRITICAL, "Incorrect BLSP-%d configuration\n", blsp_id);
--		ASSERT(0);
--	}
--
--	snprintf(clk_name, sizeof(clk_name), "blsp1_qup%u_ahb_iface_clk", qup_id);
--
--	ret = clk_get_set_enable(clk_name, 0 , 1);
--
--	if (ret) {
--		dprintf(CRITICAL, "Failed to enable %s clock\n", clk_name);
--		return;
--	}
--
--	snprintf(clk_name, sizeof(clk_name), "gcc_blsp1_qup%u_i2c_apps_clk", qup_id);
--
--	qup_clk = clk_get(clk_name);
--
--	if (!qup_clk) {
--		dprintf(CRITICAL, "Failed to get %s\n", clk_name);
--		return;
--	}
--
--	ret = clk_enable(qup_clk);
--
--	if (ret) {
--		dprintf(CRITICAL, "Failed to enable %s\n", clk_name);
--		return;
--	}
--}
--
--
--
--/* Configure spi clock */
--void clock_config_blsp_spi(uint8_t blsp_id, uint8_t qup_id)
--{
--	uint8_t ret = 0;
--	char clk_name[64];
--
--	struct clk *qup_clk;
--
--	if((blsp_id != BLSP_ID_1)) {
--		dprintf(CRITICAL, "Incorrect BLSP-%d configuration\n", blsp_id);
--		ASSERT(0);
--	}
--
--	snprintf(clk_name, sizeof(clk_name), "blsp1_ahb_iface_clk");
--
--	ret = clk_get_set_enable(clk_name, 0 , 1);
--
--	if (ret) {
--		dprintf(CRITICAL, "%s: Failed to enable %s clock\n", __func__, clk_name);
--		return;
--	}
--
--	snprintf(clk_name, sizeof(clk_name), "gcc_blsp1_qup%u_spi_apps_clk", qup_id + 1);
--
--	/* Set the highest clk frequency by default for good performance. */
--	ret = clk_get_set_enable(clk_name, 50000000, 1);
--
--	if (ret) {
--		dprintf(CRITICAL, "%s: Failed to enable %s\n", __func__, clk_name);
--		return;
--	}
--}
--
++
++
++void clock_config_blsp_i2c(uint8_t blsp_id, uint8_t qup_id)
++{
++	uint8_t ret = 0;
++	char clk_name[64];
++
++	struct clk *qup_clk;
++	qup_id = qup_id + 1;
++
++	if((blsp_id != BLSP_ID_1)) {
++		dprintf(CRITICAL, "Incorrect BLSP-%d configuration\n", blsp_id);
++		ASSERT(0);
++	}
++
++	snprintf(clk_name, sizeof(clk_name), "blsp1_qup%u_ahb_iface_clk", qup_id);
++
++	ret = clk_get_set_enable(clk_name, 0 , 1);
++
++	if (ret) {
++		dprintf(CRITICAL, "Failed to enable %s clock\n", clk_name);
++		return;
++	}
++
++	snprintf(clk_name, sizeof(clk_name), "gcc_blsp1_qup%u_i2c_apps_clk", qup_id);
++
++	qup_clk = clk_get(clk_name);
++
++	if (!qup_clk) {
++		dprintf(CRITICAL, "Failed to get %s\n", clk_name);
++		return;
++	}
++
++	ret = clk_enable(qup_clk);
++
++	if (ret) {
++		dprintf(CRITICAL, "Failed to enable %s\n", clk_name);
++		return;
++	}
++}
++
++
++
++/* Configure spi clock */
++void clock_config_blsp_spi(uint8_t blsp_id, uint8_t qup_id)
++{
++	uint8_t ret = 0;
++	char clk_name[64];
++
++	struct clk *qup_clk;
++
++	if((blsp_id != BLSP_ID_1)) {
++		dprintf(CRITICAL, "Incorrect BLSP-%d configuration\n", blsp_id);
++		ASSERT(0);
++	}
++
++	snprintf(clk_name, sizeof(clk_name), "blsp1_ahb_iface_clk");
++
++	ret = clk_get_set_enable(clk_name, 0 , 1);
++
++	if (ret) {
++		dprintf(CRITICAL, "%s: Failed to enable %s clock\n", __func__, clk_name);
++		return;
++	}
++
++	snprintf(clk_name, sizeof(clk_name), "gcc_blsp1_qup%u_spi_apps_clk", qup_id + 1);
++
++	/* Set the highest clk frequency by default for good performance. */
++	ret = clk_get_set_enable(clk_name, 50000000, 1);
++
++	if (ret) {
++		dprintf(CRITICAL, "%s: Failed to enable %s\n", __func__, clk_name);
++		return;
++	}
++}
++
 diff --git a/bootable/bootloader/lk/platform/msm8909/gpio.c b/bootable/bootloader/lk/platform/msm8909/gpio.c
-old mode 100755
-new mode 100644
-index fc42647..70d4dc4
+old mode 100644
+new mode 100755
+index 70d4dc4..fc42647
 --- a/bootable/bootloader/lk/platform/msm8909/gpio.c
 +++ b/bootable/bootloader/lk/platform/msm8909/gpio.c
-@@ -68,80 +68,3 @@ uint32_t gpio_status(uint32_t gpio)
+@@ -68,3 +68,80 @@ uint32_t gpio_status(uint32_t gpio)
  	return readl(GPIO_IN_OUT_ADDR(gpio)) & GPIO_IN;
  }
  
--
--void gpio_config_blsp_i2c(uint8_t blsp_id, uint8_t qup_id)
--{
--	qup_id += 1;
--	if(blsp_id == BLSP_ID_1) {
--		switch (qup_id) {
--			case QUP_ID_1:
--				//for example
--				/* configure I2C SDA gpio */
--//				gpio_tlmm_config(6, 3, GPIO_OUTPUT, GPIO_NO_PULL,
--//					GPIO_8MA, GPIO_DISABLE);
--
--				/* configure I2C SCL gpio */
--//				gpio_tlmm_config(7, 3, GPIO_OUTPUT, GPIO_NO_PULL,
--//					GPIO_8MA, GPIO_DISABLE);
--			break;
--			case QUP_ID_2:
--			break;
--			case QUP_ID_3:
--			break;
--			case QUP_ID_4:
--			break;
--			case QUP_ID_5:
--			break;
--			default:
--				dprintf(CRITICAL, "Incorrect QUP id %d\n",qup_id);
--				ASSERT(0);
--		};
--	} else {
--		dprintf(CRITICAL, "Incorrect BLSP id %d\n",blsp_id);
--		ASSERT(0);
--	}
--}
--
--void gpio_config_blsp_spi(uint8_t blsp_id, uint8_t qup_id)
--{
--	if(blsp_id == BLSP_ID_1) {
--		switch (qup_id) {
--
--			case QUP_ID_4:
--				break;
--			case QUP_ID_0:
--				break;
--			case QUP_ID_1:
--				break;
--			case QUP_ID_2:
--				break;
--			case QUP_ID_3:
--				break;
--			case QUP_ID_5:
--				/* configure SPI MOSI gpio */
--				gpio_tlmm_config(8, 1, GPIO_OUTPUT, GPIO_NO_PULL,
--					GPIO_16MA, GPIO_DISABLE);
--
--					/* configure SPI MISO gpio */
--				gpio_tlmm_config(9, 1, GPIO_OUTPUT, GPIO_NO_PULL,
--					GPIO_16MA, GPIO_DISABLE);
--
--				/* configure SPI CS_N gpio */
--				gpio_tlmm_config(10, 1, GPIO_OUTPUT, GPIO_NO_PULL,
--					GPIO_16MA, GPIO_DISABLE);
--
--				/* configure SPI CLK gpio */
--				gpio_tlmm_config(11, 1, GPIO_OUTPUT, GPIO_NO_PULL,
--					GPIO_16MA, GPIO_DISABLE);
--				break;
--			default:
--				dprintf(CRITICAL, "Incorrect QUP id %d\n",qup_id);
--				ASSERT(0);
--		};
--	} else {
--		dprintf(CRITICAL, "Incorrect BLSP id %d\n",blsp_id);
--		ASSERT(0);
--	}
--}
--
--
++
++void gpio_config_blsp_i2c(uint8_t blsp_id, uint8_t qup_id)
++{
++	qup_id += 1;
++	if(blsp_id == BLSP_ID_1) {
++		switch (qup_id) {
++			case QUP_ID_1:
++				//for example
++				/* configure I2C SDA gpio */
++//				gpio_tlmm_config(6, 3, GPIO_OUTPUT, GPIO_NO_PULL,
++//					GPIO_8MA, GPIO_DISABLE);
++
++				/* configure I2C SCL gpio */
++//				gpio_tlmm_config(7, 3, GPIO_OUTPUT, GPIO_NO_PULL,
++//					GPIO_8MA, GPIO_DISABLE);
++			break;
++			case QUP_ID_2:
++			break;
++			case QUP_ID_3:
++			break;
++			case QUP_ID_4:
++			break;
++			case QUP_ID_5:
++			break;
++			default:
++				dprintf(CRITICAL, "Incorrect QUP id %d\n",qup_id);
++				ASSERT(0);
++		};
++	} else {
++		dprintf(CRITICAL, "Incorrect BLSP id %d\n",blsp_id);
++		ASSERT(0);
++	}
++}
++
++void gpio_config_blsp_spi(uint8_t blsp_id, uint8_t qup_id)
++{
++	if(blsp_id == BLSP_ID_1) {
++		switch (qup_id) {
++
++			case QUP_ID_4:
++				break;
++			case QUP_ID_0:
++				break;
++			case QUP_ID_1:
++				break;
++			case QUP_ID_2:
++				break;
++			case QUP_ID_3:
++				break;
++			case QUP_ID_5:
++				/* configure SPI MOSI gpio */
++				gpio_tlmm_config(8, 1, GPIO_OUTPUT, GPIO_NO_PULL,
++					GPIO_16MA, GPIO_DISABLE);
++
++					/* configure SPI MISO gpio */
++				gpio_tlmm_config(9, 1, GPIO_OUTPUT, GPIO_NO_PULL,
++					GPIO_16MA, GPIO_DISABLE);
++
++				/* configure SPI CS_N gpio */
++				gpio_tlmm_config(10, 1, GPIO_OUTPUT, GPIO_NO_PULL,
++					GPIO_16MA, GPIO_DISABLE);
++
++				/* configure SPI CLK gpio */
++				gpio_tlmm_config(11, 1, GPIO_OUTPUT, GPIO_NO_PULL,
++					GPIO_16MA, GPIO_DISABLE);
++				break;
++			default:
++				dprintf(CRITICAL, "Incorrect QUP id %d\n",qup_id);
++				ASSERT(0);
++		};
++	} else {
++		dprintf(CRITICAL, "Incorrect BLSP id %d\n",blsp_id);
++		ASSERT(0);
++	}
++}
++
++
 diff --git a/bootable/bootloader/lk/platform/msm8909/include/platform/clock.h b/bootable/bootloader/lk/platform/msm8909/include/platform/clock.h
-old mode 100755
-new mode 100644
-index 07127f2..ffdaef0
+old mode 100644
+new mode 100755
+index ffdaef0..07127f2
 --- a/bootable/bootloader/lk/platform/msm8909/include/platform/clock.h
 +++ b/bootable/bootloader/lk/platform/msm8909/include/platform/clock.h
-@@ -74,6 +74,4 @@ void hsusb_clock_init(void);
+@@ -74,4 +74,6 @@ void hsusb_clock_init(void);
  void clock_config_ce(uint8_t instance);
  void mdp_clock_init(void);
  void mdp_gdsc_ctrl(uint8_t enable);
--void clock_config_blsp_i2c(uint8_t blsp_id, uint8_t qup_id);
--void clock_config_blsp_spi(uint8_t blsp_id, uint8_t qup_id);
++void clock_config_blsp_i2c(uint8_t blsp_id, uint8_t qup_id);
++void clock_config_blsp_spi(uint8_t blsp_id, uint8_t qup_id);
  #endif
 diff --git a/bootable/bootloader/lk/platform/msm8909/include/platform/gpio.h b/bootable/bootloader/lk/platform/msm8909/include/platform/gpio.h
-old mode 100755
-new mode 100644
-index 4ed05ca..da40c1e
+old mode 100644
+new mode 100755
+index da40c1e..4ed05ca
 --- a/bootable/bootloader/lk/platform/msm8909/include/platform/gpio.h
 +++ b/bootable/bootloader/lk/platform/msm8909/include/platform/gpio.h
-@@ -61,5 +61,4 @@
+@@ -61,4 +61,5 @@
  #define GPIO_OUT        BIT(1)
  
  void gpio_config_uart_dm(uint8_t id);
--void gpio_config_blsp_spi(uint8_t blsp_id, uint8_t qup_id);
++void gpio_config_blsp_spi(uint8_t blsp_id, uint8_t qup_id);
  #endif
 diff --git a/bootable/bootloader/lk/platform/msm8909/include/platform/iomap.h b/bootable/bootloader/lk/platform/msm8909/include/platform/iomap.h
-old mode 100755
-new mode 100644
-index d574c34..8559b49
+old mode 100644
+new mode 100755
+index 8559b49..d574c34
 --- a/bootable/bootloader/lk/platform/msm8909/include/platform/iomap.h
 +++ b/bootable/bootloader/lk/platform/msm8909/include/platform/iomap.h
 @@ -1,4 +1,4 @@
--/* Copyright (c) 2014, 2017, The Linux Foundation. All rights reserved.
-+/* Copyright (c) 2015, The Linux Foundation. All rights reserved.
+-/* Copyright (c) 2015, The Linux Foundation. All rights reserved.
++/* Copyright (c) 2014, 2017, The Linux Foundation. All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without
   * modification, are permitted provided that the following conditions are
-@@ -103,54 +103,9 @@
+@@ -103,9 +103,54 @@
  #define  GCC_CRYPTO_AHB_CBCR        (CLK_CTL_BASE + 0x16024)
  
  /* I2C */
--#define BLSP_QUP_BASE(blsp_id, qup_id) (PERIPH_SS_BASE + 0xB5000 + 0x1000 * qup_id)
--#define GCC_BLSP1_QUP1_APPS_CBCR    (CLK_CTL_BASE + 0x2008)
--#define GCC_BLSP1_QUP1_CFG_RCGR     (CLK_CTL_BASE + 0x2010)
--#define GCC_BLSP1_QUP1_CMD_RCGR     (CLK_CTL_BASE + 0x200C)
--
--
--
++#define BLSP_QUP_BASE(blsp_id, qup_id) (PERIPH_SS_BASE + 0xB5000 + 0x1000 * qup_id)
++#define GCC_BLSP1_QUP1_APPS_CBCR    (CLK_CTL_BASE + 0x2008)
++#define GCC_BLSP1_QUP1_CFG_RCGR     (CLK_CTL_BASE + 0x2010)
++#define GCC_BLSP1_QUP1_CMD_RCGR     (CLK_CTL_BASE + 0x200C)
++
++
++
  #define GCC_BLSP1_QUP2_APPS_CBCR    (CLK_CTL_BASE + 0x3010)
--#define GCC_BLSP1_QUP2_CFG_RCGR     (CLK_CTL_BASE + 0x3004)
--#define GCC_BLSP1_QUP2_CMD_RCGR     (CLK_CTL_BASE + 0x3000)
--
--
--#define GCC_BLSP1_QUP3_APPS_CBCR    (CLK_CTL_BASE + 0x4020)
--#define GCC_BLSP1_QUP3_CFG_RCGR     (CLK_CTL_BASE + 0x4004)
--#define GCC_BLSP1_QUP3_CMD_RCGR     (CLK_CTL_BASE + 0x4000)
--
--
--#define GCC_BLSP1_QUP4_APPS_CBCR    (CLK_CTL_BASE + 0x5020)
--#define GCC_BLSP1_QUP4_CFG_RCGR     (CLK_CTL_BASE + 0x5004)
--#define GCC_BLSP1_QUP4_CMD_RCGR     (CLK_CTL_BASE + 0x5000)
--
--#define GCC_BLSP1_QUP5_APPS_CBCR    (CLK_CTL_BASE + 0x6020)
--#define GCC_BLSP1_QUP5_CFG_RCGR     (CLK_CTL_BASE + 0x6004)
--#define GCC_BLSP1_QUP5_CMD_RCGR     (CLK_CTL_BASE + 0x6000)
--
--
--#define GCC_BLSP1_QUP6_APPS_CBCR    (CLK_CTL_BASE + 0x7020)
--#define GCC_BLSP1_QUP6_CFG_RCGR     (CLK_CTL_BASE + 0x7004)
--#define GCC_BLSP1_QUP6_CMD_RCGR     (CLK_CTL_BASE + 0x7000)
--
--
--#define GCC_BLSP1_QUP5_SPI_APPS_CBCR    	(CLK_CTL_BASE + 0x601C)
--#define GCC_BLSP1_QUP5_SPI_APPS_CMD_RCGR	(CLK_CTL_BASE + 0x6024)
--#define GCC_BLSP1_QUP5_SPI_CFG_RCGR     	(CLK_CTL_BASE + 0x6028)
--#define GCC_BLSP1_QUP5_SPI_APPS_M     		(CLK_CTL_BASE + 0x602C)
--#define GCC_BLSP1_QUP5_SPI_APPS_N     		(CLK_CTL_BASE + 0x6030)
--#define GCC_BLSP1_QUP5_SPI_APPS_D     		(CLK_CTL_BASE + 0x6034)
--
--
--
--#define GCC_BLSP1_QUP6_SPI_APPS_CBCR		(CLK_CTL_BASE + 0x701C)
--#define GCC_BLSP1_QUP6_SPI_APPS_CMD_RCGR	(CLK_CTL_BASE + 0x7024)
--#define GCC_BLSP1_QUP6_SPI_CFG_RCGR     	(CLK_CTL_BASE + 0x7028)
--#define GCC_BLSP1_QUP6_SPI_APPS_M     		(CLK_CTL_BASE + 0x702C)
--#define GCC_BLSP1_QUP6_SPI_APPS_N     		(CLK_CTL_BASE + 0x7030)
--#define GCC_BLSP1_QUP6_SPI_APPS_D     		(CLK_CTL_BASE + 0x7034)
--
--
-+#define GCC_BLSP1_QUP2_CFG_RCGR     (CLK_CTL_BASE + 0x3018)
-+#define GCC_BLSP1_QUP2_CMD_RCGR     (CLK_CTL_BASE + 0x3014)
+-#define GCC_BLSP1_QUP2_CFG_RCGR     (CLK_CTL_BASE + 0x3018)
+-#define GCC_BLSP1_QUP2_CMD_RCGR     (CLK_CTL_BASE + 0x3014)
++#define GCC_BLSP1_QUP2_CFG_RCGR     (CLK_CTL_BASE + 0x3004)
++#define GCC_BLSP1_QUP2_CMD_RCGR     (CLK_CTL_BASE + 0x3000)
++
++
++#define GCC_BLSP1_QUP3_APPS_CBCR    (CLK_CTL_BASE + 0x4020)
++#define GCC_BLSP1_QUP3_CFG_RCGR     (CLK_CTL_BASE + 0x4004)
++#define GCC_BLSP1_QUP3_CMD_RCGR     (CLK_CTL_BASE + 0x4000)
++
++
++#define GCC_BLSP1_QUP4_APPS_CBCR    (CLK_CTL_BASE + 0x5020)
++#define GCC_BLSP1_QUP4_CFG_RCGR     (CLK_CTL_BASE + 0x5004)
++#define GCC_BLSP1_QUP4_CMD_RCGR     (CLK_CTL_BASE + 0x5000)
++
++#define GCC_BLSP1_QUP5_APPS_CBCR    (CLK_CTL_BASE + 0x6020)
++#define GCC_BLSP1_QUP5_CFG_RCGR     (CLK_CTL_BASE + 0x6004)
++#define GCC_BLSP1_QUP5_CMD_RCGR     (CLK_CTL_BASE + 0x6000)
++
++
++#define GCC_BLSP1_QUP6_APPS_CBCR    (CLK_CTL_BASE + 0x7020)
++#define GCC_BLSP1_QUP6_CFG_RCGR     (CLK_CTL_BASE + 0x7004)
++#define GCC_BLSP1_QUP6_CMD_RCGR     (CLK_CTL_BASE + 0x7000)
++
++
++#define GCC_BLSP1_QUP5_SPI_APPS_CBCR    	(CLK_CTL_BASE + 0x601C)
++#define GCC_BLSP1_QUP5_SPI_APPS_CMD_RCGR	(CLK_CTL_BASE + 0x6024)
++#define GCC_BLSP1_QUP5_SPI_CFG_RCGR     	(CLK_CTL_BASE + 0x6028)
++#define GCC_BLSP1_QUP5_SPI_APPS_M     		(CLK_CTL_BASE + 0x602C)
++#define GCC_BLSP1_QUP5_SPI_APPS_N     		(CLK_CTL_BASE + 0x6030)
++#define GCC_BLSP1_QUP5_SPI_APPS_D     		(CLK_CTL_BASE + 0x6034)
++
++
++
++#define GCC_BLSP1_QUP6_SPI_APPS_CBCR		(CLK_CTL_BASE + 0x701C)
++#define GCC_BLSP1_QUP6_SPI_APPS_CMD_RCGR	(CLK_CTL_BASE + 0x7024)
++#define GCC_BLSP1_QUP6_SPI_CFG_RCGR     	(CLK_CTL_BASE + 0x7028)
++#define GCC_BLSP1_QUP6_SPI_APPS_M     		(CLK_CTL_BASE + 0x702C)
++#define GCC_BLSP1_QUP6_SPI_APPS_N     		(CLK_CTL_BASE + 0x7030)
++#define GCC_BLSP1_QUP6_SPI_APPS_D     		(CLK_CTL_BASE + 0x7034)
++
++
  
  
  /* GPLL */
 diff --git a/bootable/bootloader/lk/platform/msm8909/include/platform/irqs.h b/bootable/bootloader/lk/platform/msm8909/include/platform/irqs.h
-old mode 100755
-new mode 100644
-index 70cbefd..3ef97b1
+old mode 100644
+new mode 100755
+index 3ef97b1..70cbefd
 --- a/bootable/bootloader/lk/platform/msm8909/include/platform/irqs.h
 +++ b/bootable/bootloader/lk/platform/msm8909/include/platform/irqs.h
 @@ -1,4 +1,4 @@
--/* Copyright (c) 2014, 2017, The Linux Foundation. All rights reserved.
-+/* Copyright (c) 2014, The Linux Foundation. All rights reserved.
+-/* Copyright (c) 2014, The Linux Foundation. All rights reserved.
++/* Copyright (c) 2014, 2017, The Linux Foundation. All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without
   * modification, are permitted provided that the following conditions are
-@@ -64,5 +64,4 @@
+@@ -64,4 +64,5 @@
  #define NR_IRQS                                (NR_MSM_IRQS + NR_GPIO_IRQS + \
                                                 NR_BOARD_IRQS)
  
--#define BLSP_QUP_IRQ(blsp_id, qup_id)          (GIC_SPI_START + 95 + qup_id)
++#define BLSP_QUP_IRQ(blsp_id, qup_id)          (GIC_SPI_START + 95 + qup_id)
  #endif /* __IRQS_MSM8909_H */
 diff --git a/bootable/bootloader/lk/platform/msm8909/msm8909-clock.c b/bootable/bootloader/lk/platform/msm8909/msm8909-clock.c
-old mode 100755
-new mode 100644
-index a42e3e9..78ece16
+old mode 100644
+new mode 100755
+index 78ece16..a42e3e9
 --- a/bootable/bootloader/lk/platform/msm8909/msm8909-clock.c
 +++ b/bootable/bootloader/lk/platform/msm8909/msm8909-clock.c
-@@ -389,30 +389,6 @@ static struct vote_clk gcc_ce1_axi_clk = {
+@@ -389,6 +389,30 @@ static struct vote_clk gcc_ce1_axi_clk = {
  	},
  };
  
--static struct rcg_clk gcc_blsp1_qup1_i2c_apps_clk_src =
--{
--	.cmd_reg      = (uint32_t *) GCC_BLSP1_QUP1_CMD_RCGR,
--	.cfg_reg      = (uint32_t *) GCC_BLSP1_QUP1_CFG_RCGR,
--	.set_rate     = clock_lib2_rcg_set_rate_hid,
--	.freq_tbl     = ftbl_gcc_blsp1_qup2_i2c_apps_clk_src,
--	.current_freq = &rcg_dummy_freq,
--
--	.c = {
--		.dbg_name = "gcc_blsp1_qup1_i2c_apps_clk_src",
--		.ops      = &clk_ops_rcg,
--	},
--};
--
--static struct branch_clk gcc_blsp1_qup1_i2c_apps_clk = {
--	.cbcr_reg = GCC_BLSP1_QUP1_APPS_CBCR,
--	.parent   = &gcc_blsp1_qup1_i2c_apps_clk_src.c,
--
--	.c = {
--		.dbg_name = "gcc_blsp1_qup1_i2c_apps_clk",
--		.ops      = &clk_ops_branch,
--	},
--};
--
++static struct rcg_clk gcc_blsp1_qup1_i2c_apps_clk_src =
++{
++	.cmd_reg      = (uint32_t *) GCC_BLSP1_QUP1_CMD_RCGR,
++	.cfg_reg      = (uint32_t *) GCC_BLSP1_QUP1_CFG_RCGR,
++	.set_rate     = clock_lib2_rcg_set_rate_hid,
++	.freq_tbl     = ftbl_gcc_blsp1_qup2_i2c_apps_clk_src,
++	.current_freq = &rcg_dummy_freq,
++
++	.c = {
++		.dbg_name = "gcc_blsp1_qup1_i2c_apps_clk_src",
++		.ops      = &clk_ops_rcg,
++	},
++};
++
++static struct branch_clk gcc_blsp1_qup1_i2c_apps_clk = {
++	.cbcr_reg = GCC_BLSP1_QUP1_APPS_CBCR,
++	.parent   = &gcc_blsp1_qup1_i2c_apps_clk_src.c,
++
++	.c = {
++		.dbg_name = "gcc_blsp1_qup1_i2c_apps_clk",
++		.ops      = &clk_ops_branch,
++	},
++};
++
  
  static struct rcg_clk gcc_blsp1_qup2_i2c_apps_clk_src =
  {
-@@ -438,144 +414,6 @@ static struct branch_clk gcc_blsp1_qup2_i2c_apps_clk = {
+@@ -414,6 +438,144 @@ static struct branch_clk gcc_blsp1_qup2_i2c_apps_clk = {
  	},
  };
  
--static struct rcg_clk gcc_blsp1_qup3_i2c_apps_clk_src =
--{
--	.cmd_reg      = (uint32_t *) GCC_BLSP1_QUP3_CMD_RCGR,
--	.cfg_reg      = (uint32_t *) GCC_BLSP1_QUP3_CFG_RCGR,
--	.set_rate     = clock_lib2_rcg_set_rate_hid,
--	.freq_tbl     = ftbl_gcc_blsp1_qup2_i2c_apps_clk_src,
--	.current_freq = &rcg_dummy_freq,
--
--	.c = {
--		.dbg_name = "gcc_blsp1_qup3_i2c_apps_clk_src",
--		.ops      = &clk_ops_rcg,
--	 },
--};
--
--static struct branch_clk gcc_blsp1_qup3_i2c_apps_clk = {
--	.cbcr_reg = GCC_BLSP1_QUP3_APPS_CBCR,
--	.parent   = &gcc_blsp1_qup3_i2c_apps_clk_src.c,
--
--	.c = {
--		.dbg_name = "gcc_blsp1_qup3_i2c_apps_clk",
--		.ops      = &clk_ops_branch,
--	},
--};
--
--static struct rcg_clk gcc_blsp1_qup4_i2c_apps_clk_src =
--{
--	.cmd_reg      = (uint32_t *) GCC_BLSP1_QUP4_CMD_RCGR,
--	.cfg_reg      = (uint32_t *) GCC_BLSP1_QUP4_CFG_RCGR,
--	.set_rate     = clock_lib2_rcg_set_rate_hid,
--	.freq_tbl     = ftbl_gcc_blsp1_qup2_i2c_apps_clk_src,
--	.current_freq = &rcg_dummy_freq,
--
--	.c = {
--		.dbg_name = "gcc_blsp1_qup4_i2c_apps_clk_src",
--		.ops      = &clk_ops_rcg,
--	 },
--};
--
--static struct branch_clk gcc_blsp1_qup4_i2c_apps_clk = {
--	.cbcr_reg = GCC_BLSP1_QUP4_APPS_CBCR,
--	.parent   = &gcc_blsp1_qup4_i2c_apps_clk_src.c,
--
--	.c = {
--		.dbg_name = "gcc_blsp1_qup4_i2c_apps_clk",
--		.ops      = &clk_ops_branch,
--	},
--};
--
--static struct rcg_clk gcc_blsp1_qup5_i2c_apps_clk_src =
--{
--	.cmd_reg      = (uint32_t *) GCC_BLSP1_QUP5_CMD_RCGR,
--	.cfg_reg      = (uint32_t *) GCC_BLSP1_QUP5_CFG_RCGR,
--	.set_rate     = clock_lib2_rcg_set_rate_hid,
--	.freq_tbl     = ftbl_gcc_blsp1_qup2_i2c_apps_clk_src,
--	.current_freq = &rcg_dummy_freq,
--
--	.c = {
--		.dbg_name = "gcc_blsp1_qup5_i2c_apps_clk_src",
--		.ops      = &clk_ops_rcg,
--	},
--};
--
--static struct branch_clk gcc_blsp1_qup5_i2c_apps_clk = {
--	.cbcr_reg = GCC_BLSP1_QUP5_APPS_CBCR,
--	.parent   = &gcc_blsp1_qup5_i2c_apps_clk_src.c,
--
--	.c = {
--		.dbg_name = "gcc_blsp1_qup5_i2c_apps_clk",
--		.ops      = &clk_ops_branch,
--	 },
--};
--
--static struct clk_freq_tbl ftbl_gcc_blsp1_qup1_spi_apps_clk[] = {
--	F( 960000,	cxo,	10,	1,	2),
--	F( 4800000,	cxo,	4,	0,	0),
--	F( 9600000,	cxo,	2,	0,	0),
--	F( 16000000,	gpll0,	10,	1,	5),
--	F( 19200000,	cxo,	1,	0,	0),
--	F( 25000000,	gpll0,	16,	1,	2),
--	F( 50000000,	gpll0,	16,	0,	0),
--	F_END
--};
--
--static struct rcg_clk gcc_blsp1_qup5_spi_apps_clk_src =
--{
--	.cmd_reg      = (uint32_t *) GCC_BLSP1_QUP5_SPI_APPS_CMD_RCGR,
--	.cfg_reg      = (uint32_t *) GCC_BLSP1_QUP5_SPI_CFG_RCGR,
--	.m_reg        = (uint32_t *) GCC_BLSP1_QUP5_SPI_APPS_M,
--	.n_reg        = (uint32_t *) GCC_BLSP1_QUP5_SPI_APPS_N,
--	.d_reg        = (uint32_t *) GCC_BLSP1_QUP5_SPI_APPS_D,
--	.set_rate     = clock_lib2_rcg_set_rate_mnd,
--	.freq_tbl     = ftbl_gcc_blsp1_qup1_spi_apps_clk,
--	.current_freq = &rcg_dummy_freq,
--
--	.c = {
--		.dbg_name = "gcc_blsp1_qup5_spi_apps_clk_src",
--		.ops      = &clk_ops_rcg,
--	},
--};
--
--static struct branch_clk gcc_blsp1_qup5_spi_apps_clk = {
--	.cbcr_reg = GCC_BLSP1_QUP5_SPI_APPS_CBCR,
--	.parent   = &gcc_blsp1_qup5_spi_apps_clk_src.c,
--
--	.c = {
--		.dbg_name = "gcc_blsp1_qup5_spi_apps_clk",
--		.ops      = &clk_ops_branch,
--	},
--};
--
--
--static struct rcg_clk gcc_blsp1_qup6_spi_apps_clk_src =
--{
--	.cmd_reg      = (uint32_t *) GCC_BLSP1_QUP6_SPI_APPS_CMD_RCGR,
--	.cfg_reg      = (uint32_t *) GCC_BLSP1_QUP6_SPI_CFG_RCGR,
--	.m_reg        = (uint32_t *) GCC_BLSP1_QUP6_SPI_APPS_M,
--	.n_reg        = (uint32_t *) GCC_BLSP1_QUP6_SPI_APPS_N,
--	.d_reg        = (uint32_t *) GCC_BLSP1_QUP6_SPI_APPS_D,
--	.set_rate     = clock_lib2_rcg_set_rate_mnd,
--	.freq_tbl     = ftbl_gcc_blsp1_qup1_spi_apps_clk,
--	.current_freq = &rcg_dummy_freq,
--
--	.c = {
--		.dbg_name = "gcc_blsp1_qup6_spi_apps_clk_src",
--		.ops      = &clk_ops_rcg,
--	},
--};
--
--static struct branch_clk gcc_blsp1_qup6_spi_apps_clk = {
--	.cbcr_reg = GCC_BLSP1_QUP6_SPI_APPS_CBCR,
--	.parent   = &gcc_blsp1_qup6_spi_apps_clk_src.c,
--
--	.c = {
--		.dbg_name = "gcc_blsp1_qup6_spi_apps_clk",
--		.ops      = &clk_ops_branch,
--	},
--};
--
++static struct rcg_clk gcc_blsp1_qup3_i2c_apps_clk_src =
++{
++	.cmd_reg      = (uint32_t *) GCC_BLSP1_QUP3_CMD_RCGR,
++	.cfg_reg      = (uint32_t *) GCC_BLSP1_QUP3_CFG_RCGR,
++	.set_rate     = clock_lib2_rcg_set_rate_hid,
++	.freq_tbl     = ftbl_gcc_blsp1_qup2_i2c_apps_clk_src,
++	.current_freq = &rcg_dummy_freq,
++
++	.c = {
++		.dbg_name = "gcc_blsp1_qup3_i2c_apps_clk_src",
++		.ops      = &clk_ops_rcg,
++	 },
++};
++
++static struct branch_clk gcc_blsp1_qup3_i2c_apps_clk = {
++	.cbcr_reg = GCC_BLSP1_QUP3_APPS_CBCR,
++	.parent   = &gcc_blsp1_qup3_i2c_apps_clk_src.c,
++
++	.c = {
++		.dbg_name = "gcc_blsp1_qup3_i2c_apps_clk",
++		.ops      = &clk_ops_branch,
++	},
++};
++
++static struct rcg_clk gcc_blsp1_qup4_i2c_apps_clk_src =
++{
++	.cmd_reg      = (uint32_t *) GCC_BLSP1_QUP4_CMD_RCGR,
++	.cfg_reg      = (uint32_t *) GCC_BLSP1_QUP4_CFG_RCGR,
++	.set_rate     = clock_lib2_rcg_set_rate_hid,
++	.freq_tbl     = ftbl_gcc_blsp1_qup2_i2c_apps_clk_src,
++	.current_freq = &rcg_dummy_freq,
++
++	.c = {
++		.dbg_name = "gcc_blsp1_qup4_i2c_apps_clk_src",
++		.ops      = &clk_ops_rcg,
++	 },
++};
++
++static struct branch_clk gcc_blsp1_qup4_i2c_apps_clk = {
++	.cbcr_reg = GCC_BLSP1_QUP4_APPS_CBCR,
++	.parent   = &gcc_blsp1_qup4_i2c_apps_clk_src.c,
++
++	.c = {
++		.dbg_name = "gcc_blsp1_qup4_i2c_apps_clk",
++		.ops      = &clk_ops_branch,
++	},
++};
++
++static struct rcg_clk gcc_blsp1_qup5_i2c_apps_clk_src =
++{
++	.cmd_reg      = (uint32_t *) GCC_BLSP1_QUP5_CMD_RCGR,
++	.cfg_reg      = (uint32_t *) GCC_BLSP1_QUP5_CFG_RCGR,
++	.set_rate     = clock_lib2_rcg_set_rate_hid,
++	.freq_tbl     = ftbl_gcc_blsp1_qup2_i2c_apps_clk_src,
++	.current_freq = &rcg_dummy_freq,
++
++	.c = {
++		.dbg_name = "gcc_blsp1_qup5_i2c_apps_clk_src",
++		.ops      = &clk_ops_rcg,
++	},
++};
++
++static struct branch_clk gcc_blsp1_qup5_i2c_apps_clk = {
++	.cbcr_reg = GCC_BLSP1_QUP5_APPS_CBCR,
++	.parent   = &gcc_blsp1_qup5_i2c_apps_clk_src.c,
++
++	.c = {
++		.dbg_name = "gcc_blsp1_qup5_i2c_apps_clk",
++		.ops      = &clk_ops_branch,
++	 },
++};
++
++static struct clk_freq_tbl ftbl_gcc_blsp1_qup1_spi_apps_clk[] = {
++	F( 960000,	cxo,	10,	1,	2),
++	F( 4800000,	cxo,	4,	0,	0),
++	F( 9600000,	cxo,	2,	0,	0),
++	F( 16000000,	gpll0,	10,	1,	5),
++	F( 19200000,	cxo,	1,	0,	0),
++	F( 25000000,	gpll0,	16,	1,	2),
++	F( 50000000,	gpll0,	16,	0,	0),
++	F_END
++};
++
++static struct rcg_clk gcc_blsp1_qup5_spi_apps_clk_src =
++{
++	.cmd_reg      = (uint32_t *) GCC_BLSP1_QUP5_SPI_APPS_CMD_RCGR,
++	.cfg_reg      = (uint32_t *) GCC_BLSP1_QUP5_SPI_CFG_RCGR,
++	.m_reg        = (uint32_t *) GCC_BLSP1_QUP5_SPI_APPS_M,
++	.n_reg        = (uint32_t *) GCC_BLSP1_QUP5_SPI_APPS_N,
++	.d_reg        = (uint32_t *) GCC_BLSP1_QUP5_SPI_APPS_D,
++	.set_rate     = clock_lib2_rcg_set_rate_mnd,
++	.freq_tbl     = ftbl_gcc_blsp1_qup1_spi_apps_clk,
++	.current_freq = &rcg_dummy_freq,
++
++	.c = {
++		.dbg_name = "gcc_blsp1_qup5_spi_apps_clk_src",
++		.ops      = &clk_ops_rcg,
++	},
++};
++
++static struct branch_clk gcc_blsp1_qup5_spi_apps_clk = {
++	.cbcr_reg = GCC_BLSP1_QUP5_SPI_APPS_CBCR,
++	.parent   = &gcc_blsp1_qup5_spi_apps_clk_src.c,
++
++	.c = {
++		.dbg_name = "gcc_blsp1_qup5_spi_apps_clk",
++		.ops      = &clk_ops_branch,
++	},
++};
++
++
++static struct rcg_clk gcc_blsp1_qup6_spi_apps_clk_src =
++{
++	.cmd_reg      = (uint32_t *) GCC_BLSP1_QUP6_SPI_APPS_CMD_RCGR,
++	.cfg_reg      = (uint32_t *) GCC_BLSP1_QUP6_SPI_CFG_RCGR,
++	.m_reg        = (uint32_t *) GCC_BLSP1_QUP6_SPI_APPS_M,
++	.n_reg        = (uint32_t *) GCC_BLSP1_QUP6_SPI_APPS_N,
++	.d_reg        = (uint32_t *) GCC_BLSP1_QUP6_SPI_APPS_D,
++	.set_rate     = clock_lib2_rcg_set_rate_mnd,
++	.freq_tbl     = ftbl_gcc_blsp1_qup1_spi_apps_clk,
++	.current_freq = &rcg_dummy_freq,
++
++	.c = {
++		.dbg_name = "gcc_blsp1_qup6_spi_apps_clk_src",
++		.ops      = &clk_ops_rcg,
++	},
++};
++
++static struct branch_clk gcc_blsp1_qup6_spi_apps_clk = {
++	.cbcr_reg = GCC_BLSP1_QUP6_SPI_APPS_CBCR,
++	.parent   = &gcc_blsp1_qup6_spi_apps_clk_src.c,
++
++	.c = {
++		.dbg_name = "gcc_blsp1_qup6_spi_apps_clk",
++		.ops      = &clk_ops_branch,
++	},
++};
++
  /* Display clocks */
  static struct clk_freq_tbl ftbl_mdss_esc0_1_clk[] = {
  	F_MM(19200000,    cxo,   1,   0,   0),
-@@ -709,26 +547,9 @@ static struct clk_lookup msm_clocks_msm8909[] =
+@@ -547,9 +709,26 @@ static struct clk_lookup msm_clocks_msm8909[] =
  	CLK_LOOKUP("ce1_core_clk", gcc_ce1_clk.c),
  	CLK_LOOKUP("ce1_src_clk",  ce1_clk_src.c),
  
--	CLK_LOOKUP("blsp1_qup1_ahb_iface_clk", gcc_blsp1_ahb_clk.c),
++	CLK_LOOKUP("blsp1_qup1_ahb_iface_clk", gcc_blsp1_ahb_clk.c),
  	CLK_LOOKUP("blsp1_qup2_ahb_iface_clk", gcc_blsp1_ahb_clk.c),
--	CLK_LOOKUP("blsp1_qup3_ahb_iface_clk", gcc_blsp1_ahb_clk.c),
--	CLK_LOOKUP("blsp1_qup4_ahb_iface_clk", gcc_blsp1_ahb_clk.c),
--	CLK_LOOKUP("blsp1_qup5_ahb_iface_clk", gcc_blsp1_ahb_clk.c),
--	CLK_LOOKUP("gcc_blsp1_qup1_i2c_apps_clk_src", gcc_blsp1_qup1_i2c_apps_clk_src.c),
--	CLK_LOOKUP("gcc_blsp1_qup1_i2c_apps_clk", gcc_blsp1_qup1_i2c_apps_clk.c),
++	CLK_LOOKUP("blsp1_qup3_ahb_iface_clk", gcc_blsp1_ahb_clk.c),
++	CLK_LOOKUP("blsp1_qup4_ahb_iface_clk", gcc_blsp1_ahb_clk.c),
++	CLK_LOOKUP("blsp1_qup5_ahb_iface_clk", gcc_blsp1_ahb_clk.c),
++	CLK_LOOKUP("gcc_blsp1_qup1_i2c_apps_clk_src", gcc_blsp1_qup1_i2c_apps_clk_src.c),
++	CLK_LOOKUP("gcc_blsp1_qup1_i2c_apps_clk", gcc_blsp1_qup1_i2c_apps_clk.c),
  	CLK_LOOKUP("gcc_blsp1_qup2_i2c_apps_clk_src", gcc_blsp1_qup2_i2c_apps_clk_src.c),
  	CLK_LOOKUP("gcc_blsp1_qup2_i2c_apps_clk", gcc_blsp1_qup2_i2c_apps_clk.c),
--	CLK_LOOKUP("gcc_blsp1_qup3_i2c_apps_clk_src", gcc_blsp1_qup3_i2c_apps_clk_src.c),
--	CLK_LOOKUP("gcc_blsp1_qup3_i2c_apps_clk", gcc_blsp1_qup3_i2c_apps_clk.c),
--	CLK_LOOKUP("gcc_blsp1_qup4_i2c_apps_clk_src", gcc_blsp1_qup4_i2c_apps_clk_src.c),
--	CLK_LOOKUP("gcc_blsp1_qup4_i2c_apps_clk", gcc_blsp1_qup4_i2c_apps_clk.c),
--	CLK_LOOKUP("gcc_blsp1_qup5_i2c_apps_clk_src", gcc_blsp1_qup5_i2c_apps_clk_src.c),
--	CLK_LOOKUP("gcc_blsp1_qup5_i2c_apps_clk", gcc_blsp1_qup5_i2c_apps_clk.c),
--	CLK_LOOKUP("blsp1_ahb_iface_clk", gcc_blsp1_ahb_clk.c),
--	CLK_LOOKUP("gcc_blsp1_qup5_spi_apps_clk_src", gcc_blsp1_qup5_spi_apps_clk_src.c),
--	CLK_LOOKUP("gcc_blsp1_qup5_spi_apps_clk", gcc_blsp1_qup5_spi_apps_clk.c),
--	CLK_LOOKUP("gcc_blsp1_qup6_spi_apps_clk_src", gcc_blsp1_qup6_spi_apps_clk_src.c),
--	CLK_LOOKUP("gcc_blsp1_qup6_spi_apps_clk", gcc_blsp1_qup6_spi_apps_clk.c),
++	CLK_LOOKUP("gcc_blsp1_qup3_i2c_apps_clk_src", gcc_blsp1_qup3_i2c_apps_clk_src.c),
++	CLK_LOOKUP("gcc_blsp1_qup3_i2c_apps_clk", gcc_blsp1_qup3_i2c_apps_clk.c),
++	CLK_LOOKUP("gcc_blsp1_qup4_i2c_apps_clk_src", gcc_blsp1_qup4_i2c_apps_clk_src.c),
++	CLK_LOOKUP("gcc_blsp1_qup4_i2c_apps_clk", gcc_blsp1_qup4_i2c_apps_clk.c),
++	CLK_LOOKUP("gcc_blsp1_qup5_i2c_apps_clk_src", gcc_blsp1_qup5_i2c_apps_clk_src.c),
++	CLK_LOOKUP("gcc_blsp1_qup5_i2c_apps_clk", gcc_blsp1_qup5_i2c_apps_clk.c),
++	CLK_LOOKUP("blsp1_ahb_iface_clk", gcc_blsp1_ahb_clk.c),
++	CLK_LOOKUP("gcc_blsp1_qup5_spi_apps_clk_src", gcc_blsp1_qup5_spi_apps_clk_src.c),
++	CLK_LOOKUP("gcc_blsp1_qup5_spi_apps_clk", gcc_blsp1_qup5_spi_apps_clk.c),
++	CLK_LOOKUP("gcc_blsp1_qup6_spi_apps_clk_src", gcc_blsp1_qup6_spi_apps_clk_src.c),
++	CLK_LOOKUP("gcc_blsp1_qup6_spi_apps_clk", gcc_blsp1_qup6_spi_apps_clk.c),
  
  	CLK_LOOKUP("mdp_ahb_clk", mdp_ahb_clk.c),
  	CLK_LOOKUP("mdss_esc0_clk", mdss_esc0_clk.c),
 diff --git a/bootable/bootloader/lk/platform/msm8909/rules.mk b/bootable/bootloader/lk/platform/msm8909/rules.mk
-old mode 100755
-new mode 100644
+old mode 100644
+new mode 100755
 diff --git a/bootable/bootloader/lk/platform/msm_shared/display.c b/bootable/bootloader/lk/platform/msm_shared/display.c
-old mode 100755
-new mode 100644
-index 6d076ab..54aba45
+old mode 100644
+new mode 100755
+index 54aba45..6d076ab
 --- a/bootable/bootloader/lk/platform/msm_shared/display.c
 +++ b/bootable/bootloader/lk/platform/msm_shared/display.c
-@@ -115,12 +115,6 @@ int msm_display_config()
+@@ -115,6 +115,12 @@ int msm_display_config()
  		if (ret)
  			goto msm_display_config_out;
  		break;
--	case SPI_PANEL:
--		dprintf(INFO, "Config SPI PANEL.\n");
--		ret = mdss_spi_panel_init(pinfo);
--		if (ret)
--			goto msm_display_config_out;
--		break;
++	case SPI_PANEL:
++		dprintf(INFO, "Config SPI PANEL.\n");
++		ret = mdss_spi_panel_init(pinfo);
++		if (ret)
++			goto msm_display_config_out;
++		break;
  	case HDMI_PANEL:
  		dprintf(INFO, "Config HDMI PANEL.\n");
  		ret = mdss_hdmi_config(pinfo, &(panel->fb));
-@@ -227,12 +221,6 @@ int msm_display_on()
+@@ -221,6 +227,12 @@ int msm_display_on()
  		if (ret)
  			goto msm_display_on_out;
  		break;
--	case SPI_PANEL:
--		dprintf(INFO, "Turn on SPI PANEL.\n");
--		ret = mdss_spi_on(pinfo, &(panel->fb));
--		if (ret)
--			goto msm_display_on_out;
--		break;
++	case SPI_PANEL:
++		dprintf(INFO, "Turn on SPI PANEL.\n");
++		ret = mdss_spi_on(pinfo, &(panel->fb));
++		if (ret)
++			goto msm_display_on_out;
++		break;
  	default:
  		return ERR_INVALID_ARGS;
  	};
-@@ -288,11 +276,11 @@ int msm_display_init(struct msm_fb_panel_data *pdata)
+@@ -276,11 +288,11 @@ int msm_display_init(struct msm_fb_panel_data *pdata)
  	ret = msm_fb_alloc(&(panel->fb));
  	if (ret)
  		goto msm_display_init_out;
--	
-+
+-
++	
  	ret = msm_display_config();
  	if (ret)
  		goto msm_display_init_out;
--	
-+
+-
++	
  	fbcon_setup(&(panel->fb));
  	display_image_on_screen();
  	ret = msm_display_on();
 diff --git a/bootable/bootloader/lk/platform/msm_shared/include/msm_panel.h b/bootable/bootloader/lk/platform/msm_shared/include/msm_panel.h
-index ccf7299..6944f09 100755
+index 6944f09..ccf7299 100755
 --- a/bootable/bootloader/lk/platform/msm_shared/include/msm_panel.h
 +++ b/bootable/bootloader/lk/platform/msm_shared/include/msm_panel.h
-@@ -50,7 +50,6 @@
+@@ -50,6 +50,7 @@
  #define WRITEBACK_PANEL		10	/* Wifi display */
  #define LVDS_PANEL		11	/* LVDS */
  #define EDP_PANEL		12	/* EDP */
--#define SPI_PANEL 		13	/* SPI */
++#define SPI_PANEL 		13	/* SPI */
  
  enum mdss_mdp_pipe_type {
  	MDSS_MDP_PIPE_TYPE_VIG,
-@@ -86,17 +85,6 @@ struct lcd_panel_info {
+@@ -85,6 +86,17 @@ struct lcd_panel_info {
  	uint32_t rev;
  };
  
--struct mdss_spi_cmd {
--	int size;
--	char *payload;
--	int wait;
--};
--
--struct spi_panel_info {
--	int num_of_panel_cmds;
--	struct mdss_spi_cmd *panel_cmds;
--};
--
++struct mdss_spi_cmd {
++	int size;
++	char *payload;
++	int wait;
++};
++
++struct spi_panel_info {
++	int num_of_panel_cmds;
++	struct mdss_spi_cmd *panel_cmds;
++};
++
  struct hdmi_panel_info {
  	uint32_t h_back_porch;
  	uint32_t h_front_porch;
-@@ -230,7 +218,6 @@ struct edp_panel_info {
+@@ -218,6 +230,7 @@ struct edp_panel_info {
  	unsigned long max_link_clk;
  };
  
--
++
  enum lvds_mode {
  	LVDS_SINGLE_CHANNEL_MODE,
  	LVDS_DUAL_CHANNEL_MODE,
-@@ -262,7 +249,6 @@ struct msm_panel_info {
+@@ -249,6 +262,7 @@ struct msm_panel_info {
  	struct lvds_panel_info lvds;
  	struct hdmi_panel_info hdmi;
  	struct edp_panel_info edp;
--	struct spi_panel_info spi;
++	struct spi_panel_info spi;
  
  	int (*on) (void);
  	int (*off) (void);
 diff --git a/bootable/bootloader/lk/platform/msm_shared/include/panel_st7789v_qvga_spi_cmd.h b/bootable/bootloader/lk/platform/msm_shared/include/panel_st7789v_qvga_spi_cmd.h
-deleted file mode 100755
-index fd125cb..0000000
---- a/bootable/bootloader/lk/platform/msm_shared/include/panel_st7789v_qvga_spi_cmd.h
-+++ /dev/null
-@@ -1,189 +0,0 @@
--/* Copyright (c) 2017, The Linux Foundation. All rights reserved.
--*
--* Redistribution and use in source and binary forms, with or without
--* modification, are permitted provided that the following conditions are
--* met:
--*    * Redistributions of source code must retain the above copyright
--*      notice, this list of conditions and the following disclaimer.
--*    * Redistributions in binary form must reproduce the above
--*      copyright notice, this list of conditions and the following
--*      disclaimer in the documentation and/or other materials provided
--*      with the distribution.
--*    * Neither the name of The Linux Foundation nor the names of its
--*      contributors may be used to endorse or promote products derived
--*      from this software without specific prior written permission.
--*
--* THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
--* WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
--* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
--* ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
--* BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
--* CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
--* SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
--* BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
--* WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
--* OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
--* IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
--*/
--
--#ifndef _PANEL_ST7789V_QVGA_SPI_CMD_H_
--#define _PANEL_ST7789V_QVGA_SPI_CMD_H_
--/*---------------------------------------------------------------------------*/
--/* HEADER files                                                              */
--/*---------------------------------------------------------------------------*/
--#include "panel.h"
--
--/*---------------------------------------------------------------------------*/
--/* Panel configuration                                                       */
--/*---------------------------------------------------------------------------*/
--static struct panel_config st7789v_qvga_cmd_panel_data = {
--	"qcom,mdss_spi_st7789v_qvga_cmd", "spi:0:", "qcom,mdss-spi-panel",
--	10, 0, "DISPLAY_1", 0, 0, 60, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
--};
--
--/*---------------------------------------------------------------------------*/
--/* Panel resolution                                                          */
--/*---------------------------------------------------------------------------*/
--static struct panel_resolution st7789v_qvga_cmd_panel_res = {
--	240, 320, 38, 20, 10, 0, 8, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0
--};
--
--/*---------------------------------------------------------------------------*/
--/* Panel color information                                                   */
--/*---------------------------------------------------------------------------*/
--static struct color_info st7789v_qvga_cmd_color = {
--	24, 0, 0xff, 0, 0, 0
--};
--
--/*---------------------------------------------------------------------------*/
--/* Panel on/off command information                                          */
--/*---------------------------------------------------------------------------*/
--static char st7789v_qvga_cmd_on_cmd0[] = {
--	0x11,
--};
--
--static char st7789v_qvga_cmd_on_cmd1[] = {
--	0x36,0x00,
--};
--
--static char st7789v_qvga_cmd_on_cmd2[] = {
--	0x3A, 0x77,
--};
--
--static char st7789v_qvga_cmd_on_cmd3[] = {
--	0x21,
--};
--
--static char st7789v_qvga_cmd_on_cmd4[] = {
--	0xB7, 0x35,
--};
--
--static char st7789v_qvga_cmd_on_cmd5[] = {
--	0xBB, 0x1F,
--};
--
--static char st7789v_qvga_cmd_on_cmd6[] = {
--	0xC2,0x01,
--};
--
--static char st7789v_qvga_cmd_on_cmd7[] = {
--	0xC3, 0x19,
--};
--
--static char st7789v_qvga_cmd_on_cmd8[] = {
--	0xC4, 0x20,
--};
--
--static char st7789v_qvga_cmd_on_cmd9[] = {
--	0xC6, 0x0F,
--};
--
--static char st7789v_qvga_cmd_on_cmd10[] = {
--	0xD0, 0xA4, 0xA1,
--};
--
--static char st7789v_qvga_cmd_on_cmd11[] = {
--	0xD6, 0xA1,
--};
--
--static char st7789v_qvga_cmd_on_cmd12[] = {
--	0xE0, 0xD0, 0x06, 0x0C,
--	0x0A, 0x09, 0x0A, 0x32,
--	0x33, 0x49, 0x19, 0x14,
--	0x15, 0x2B, 0x34,
--};
--
--static char st7789v_qvga_cmd_on_cmd13[] = {
--	0xE1, 0xD0, 0xD6, 0x0C,
--	0x0A, 0x09, 0x11, 0x37,
--	0x33, 0x49, 0x19, 0x14,
--	0x15, 0x2D, 0x34,
--};
--
--static char st7789v_qvga_cmd_on_cmd14[] = {
--	0x11,
--};
--
--static char st7789v_qvga_cmd_on_cmd15[] = {
--	0x29,
--};
--
--static char st7789v_qvga_cmd_on_cmd16[] = {
--	0x2c,
--};
--
--static struct mdss_spi_cmd st7789v_qvga_cmd_on_command[] = {
--	{0x01, st7789v_qvga_cmd_on_cmd0, 0x78},
--	{0x02, st7789v_qvga_cmd_on_cmd1, 0x00},
--	{0x02, st7789v_qvga_cmd_on_cmd2, 0x00},
--	{0x01, st7789v_qvga_cmd_on_cmd3, 0x00},
--	{0x02, st7789v_qvga_cmd_on_cmd4, 0x00},
--	{0x02, st7789v_qvga_cmd_on_cmd5, 0x00},
--	{0x02, st7789v_qvga_cmd_on_cmd6, 0x00},
--	{0x02, st7789v_qvga_cmd_on_cmd7, 0x00},
--	{0x02, st7789v_qvga_cmd_on_cmd8, 0x00},
--	{0x02, st7789v_qvga_cmd_on_cmd9, 0x00},
--	{0x03, st7789v_qvga_cmd_on_cmd10, 0x00},
--	{0x02, st7789v_qvga_cmd_on_cmd11, 0x00},
--	{0x0F, st7789v_qvga_cmd_on_cmd12, 0x00},
--	{0x0F, st7789v_qvga_cmd_on_cmd13, 0x00},
--	{0x01, st7789v_qvga_cmd_on_cmd14, 0x78},
--	{0x01, st7789v_qvga_cmd_on_cmd15, 0x00},
--	{0x01, st7789v_qvga_cmd_on_cmd16, 0x00},
--};
--
--#define ST7789V_QVGA_CMD_ON_COMMAND 17
--
--
--static char st7789v_qvga_cmdoff_cmd0[] = {
--	0x28,
--};
--
--static char st7789v_qvga_cmdoff_cmd1[] = {
--	0x10,
--};
--
--static struct mipi_dsi_cmd st7789v_qvga_cmd_off_command[] = {
--	{0x1, st7789v_qvga_cmdoff_cmd0, 0x20},
--	{0x1, st7789v_qvga_cmdoff_cmd1, 0x20}
--};
--
--#define ST7789V_QVGA_CMD_OFF_COMMAND 2
--
--/*---------------------------------------------------------------------------*/
--/* Panel reset sequence                                                      */
--/*---------------------------------------------------------------------------*/
--static struct panel_reset_sequence st7789v_qvga_cmd_reset_seq = {
--	{1, 0, 1, }, {20, 120, 20, }, 2
--};
--
--/*---------------------------------------------------------------------------*/
--/* Backlight setting                                                         */
--/*---------------------------------------------------------------------------*/
--static struct backlight st7789v_qvga_cmd_backlight = {
--	1, 1, 4095, 100, 1, "PMIC_8941"
--};
--
--#define st7789v_QVGA_CMD_SIGNATURE 0xFFFF
--
--#endif /* PANEL_st7789v_QVGA_SPI_CMD_H */
+new file mode 100755
+index 0000000..fd125cb
+--- /dev/null
++++ b/bootable/bootloader/lk/platform/msm_shared/include/panel_st7789v_qvga_spi_cmd.h
+@@ -0,0 +1,189 @@
++/* Copyright (c) 2017, The Linux Foundation. All rights reserved.
++*
++* Redistribution and use in source and binary forms, with or without
++* modification, are permitted provided that the following conditions are
++* met:
++*    * Redistributions of source code must retain the above copyright
++*      notice, this list of conditions and the following disclaimer.
++*    * Redistributions in binary form must reproduce the above
++*      copyright notice, this list of conditions and the following
++*      disclaimer in the documentation and/or other materials provided
++*      with the distribution.
++*    * Neither the name of The Linux Foundation nor the names of its
++*      contributors may be used to endorse or promote products derived
++*      from this software without specific prior written permission.
++*
++* THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
++* WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
++* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
++* ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
++* BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++* CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++* SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
++* BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
++* WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
++* OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
++* IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++*/
++
++#ifndef _PANEL_ST7789V_QVGA_SPI_CMD_H_
++#define _PANEL_ST7789V_QVGA_SPI_CMD_H_
++/*---------------------------------------------------------------------------*/
++/* HEADER files                                                              */
++/*---------------------------------------------------------------------------*/
++#include "panel.h"
++
++/*---------------------------------------------------------------------------*/
++/* Panel configuration                                                       */
++/*---------------------------------------------------------------------------*/
++static struct panel_config st7789v_qvga_cmd_panel_data = {
++	"qcom,mdss_spi_st7789v_qvga_cmd", "spi:0:", "qcom,mdss-spi-panel",
++	10, 0, "DISPLAY_1", 0, 0, 60, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
++};
++
++/*---------------------------------------------------------------------------*/
++/* Panel resolution                                                          */
++/*---------------------------------------------------------------------------*/
++static struct panel_resolution st7789v_qvga_cmd_panel_res = {
++	240, 320, 38, 20, 10, 0, 8, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0
++};
++
++/*---------------------------------------------------------------------------*/
++/* Panel color information                                                   */
++/*---------------------------------------------------------------------------*/
++static struct color_info st7789v_qvga_cmd_color = {
++	24, 0, 0xff, 0, 0, 0
++};
++
++/*---------------------------------------------------------------------------*/
++/* Panel on/off command information                                          */
++/*---------------------------------------------------------------------------*/
++static char st7789v_qvga_cmd_on_cmd0[] = {
++	0x11,
++};
++
++static char st7789v_qvga_cmd_on_cmd1[] = {
++	0x36,0x00,
++};
++
++static char st7789v_qvga_cmd_on_cmd2[] = {
++	0x3A, 0x77,
++};
++
++static char st7789v_qvga_cmd_on_cmd3[] = {
++	0x21,
++};
++
++static char st7789v_qvga_cmd_on_cmd4[] = {
++	0xB7, 0x35,
++};
++
++static char st7789v_qvga_cmd_on_cmd5[] = {
++	0xBB, 0x1F,
++};
++
++static char st7789v_qvga_cmd_on_cmd6[] = {
++	0xC2,0x01,
++};
++
++static char st7789v_qvga_cmd_on_cmd7[] = {
++	0xC3, 0x19,
++};
++
++static char st7789v_qvga_cmd_on_cmd8[] = {
++	0xC4, 0x20,
++};
++
++static char st7789v_qvga_cmd_on_cmd9[] = {
++	0xC6, 0x0F,
++};
++
++static char st7789v_qvga_cmd_on_cmd10[] = {
++	0xD0, 0xA4, 0xA1,
++};
++
++static char st7789v_qvga_cmd_on_cmd11[] = {
++	0xD6, 0xA1,
++};
++
++static char st7789v_qvga_cmd_on_cmd12[] = {
++	0xE0, 0xD0, 0x06, 0x0C,
++	0x0A, 0x09, 0x0A, 0x32,
++	0x33, 0x49, 0x19, 0x14,
++	0x15, 0x2B, 0x34,
++};
++
++static char st7789v_qvga_cmd_on_cmd13[] = {
++	0xE1, 0xD0, 0xD6, 0x0C,
++	0x0A, 0x09, 0x11, 0x37,
++	0x33, 0x49, 0x19, 0x14,
++	0x15, 0x2D, 0x34,
++};
++
++static char st7789v_qvga_cmd_on_cmd14[] = {
++	0x11,
++};
++
++static char st7789v_qvga_cmd_on_cmd15[] = {
++	0x29,
++};
++
++static char st7789v_qvga_cmd_on_cmd16[] = {
++	0x2c,
++};
++
++static struct mdss_spi_cmd st7789v_qvga_cmd_on_command[] = {
++	{0x01, st7789v_qvga_cmd_on_cmd0, 0x78},
++	{0x02, st7789v_qvga_cmd_on_cmd1, 0x00},
++	{0x02, st7789v_qvga_cmd_on_cmd2, 0x00},
++	{0x01, st7789v_qvga_cmd_on_cmd3, 0x00},
++	{0x02, st7789v_qvga_cmd_on_cmd4, 0x00},
++	{0x02, st7789v_qvga_cmd_on_cmd5, 0x00},
++	{0x02, st7789v_qvga_cmd_on_cmd6, 0x00},
++	{0x02, st7789v_qvga_cmd_on_cmd7, 0x00},
++	{0x02, st7789v_qvga_cmd_on_cmd8, 0x00},
++	{0x02, st7789v_qvga_cmd_on_cmd9, 0x00},
++	{0x03, st7789v_qvga_cmd_on_cmd10, 0x00},
++	{0x02, st7789v_qvga_cmd_on_cmd11, 0x00},
++	{0x0F, st7789v_qvga_cmd_on_cmd12, 0x00},
++	{0x0F, st7789v_qvga_cmd_on_cmd13, 0x00},
++	{0x01, st7789v_qvga_cmd_on_cmd14, 0x78},
++	{0x01, st7789v_qvga_cmd_on_cmd15, 0x00},
++	{0x01, st7789v_qvga_cmd_on_cmd16, 0x00},
++};
++
++#define ST7789V_QVGA_CMD_ON_COMMAND 17
++
++
++static char st7789v_qvga_cmdoff_cmd0[] = {
++	0x28,
++};
++
++static char st7789v_qvga_cmdoff_cmd1[] = {
++	0x10,
++};
++
++static struct mipi_dsi_cmd st7789v_qvga_cmd_off_command[] = {
++	{0x1, st7789v_qvga_cmdoff_cmd0, 0x20},
++	{0x1, st7789v_qvga_cmdoff_cmd1, 0x20}
++};
++
++#define ST7789V_QVGA_CMD_OFF_COMMAND 2
++
++/*---------------------------------------------------------------------------*/
++/* Panel reset sequence                                                      */
++/*---------------------------------------------------------------------------*/
++static struct panel_reset_sequence st7789v_qvga_cmd_reset_seq = {
++	{1, 0, 1, }, {20, 120, 20, }, 2
++};
++
++/*---------------------------------------------------------------------------*/
++/* Backlight setting                                                         */
++/*---------------------------------------------------------------------------*/
++static struct backlight st7789v_qvga_cmd_backlight = {
++	1, 1, 4095, 100, 1, "PMIC_8941"
++};
++
++#define st7789v_QVGA_CMD_SIGNATURE 0xFFFF
++
++#endif /* PANEL_st7789v_QVGA_SPI_CMD_H */
 diff --git a/bootable/bootloader/lk/platform/msm_shared/include/qup.h b/bootable/bootloader/lk/platform/msm_shared/include/qup.h
-deleted file mode 100755
-index 8bb6d28..0000000
---- a/bootable/bootloader/lk/platform/msm_shared/include/qup.h
-+++ /dev/null
-@@ -1,141 +0,0 @@
--/* Copyright (c) 2017, The Linux Foundation. All rights reserved.
-- *
-- * Redistribution and use in source and binary forms, with or without
-- * modification, are permitted provided that the following conditions are
-- * met:
-- *  * Redistributions of source code must retain the above copyright
-- *    notice, this list of conditions and the following disclaimer.
-- *  * Redistributions in binary form must reproduce the above
-- *    copyright notice, this list of conditions and the following
-- *    disclaimer in the documentation and/or other materials provided
-- *    with the distribution.
-- *  * Neither the name of The Linux Foundation, Inc. nor the names of its
-- *    contributors may be used to endorse or promote products derived
-- *    from this software without specific prior written permission.
-- *
-- * THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
-- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
-- * ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
-- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
-- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
-- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-- */
--
--#ifndef  __QUP__
--#define  __QUP__
--
--#include <stdint.h>
--
--/* QUP_IO_MODES fields */
--#define QUP_IO_MODES_OUTPUT_BIT_SHIFT_EN  0x00010000
--#define QUP_IO_MODES_PACK_EN              0x00008000
--#define QUP_IO_MODES_UNPACK_EN            0x00004000
--#define QUP_IO_MODES_INPUT_MODE           0x00003000
--#define QUP_IO_MODES_OUTPUT_MODE          0x00000C00
--#define QUP_IO_MODES_INPUT_FIFO_SIZE      0x00000380
--#define QUP_IO_MODES_INPUT_BLOCK_SIZE     0x00000060
--#define QUP_IO_MODES_OUTPUT_FIFO_SIZE     0x0000001C
--#define QUP_IO_MODES_OUTPUT_BLOCK_SIZE    0x00000003
--
--#define INPUT_BLOCK_SZ_SHIFT		5
--#define INPUT_FIFO_SZ_SHIFT			7
--#define OUTPUT_BLOCK_SZ_SHIFT		0
--#define OUTPUT_FIFO_SZ_SHIFT		2
--#define OUTPUT_MODE_SHIFT			10
--#define INPUT_MODE_SHIFT			12
--#define INPUT_MODE_MASK		(3 << INPUT_MODE_SHIFT)
--#define OUTPUT_MODE_MASK	(3 << OUTPUT_MODE_SHIFT)
--
--/* QUP_STATE fields */
--#define QUP_STATE_CLEAR_BITS		0x2
--
--/* QUP_ERROR_FLAGS fields */
--#define QUP_ERROR_OUTPUT_OVER_RUN	BIT(5)
--#define QUP_ERROR_INPUT_UNDER_RUN	BIT(4)
--#define QUP_ERROR_OUTPUT_UNDER_RUN	BIT(3)
--#define QUP_ERROR_INPUT_OVER_RUN	BIT(2)
--
--/* QUP_OPERATIONAL fields */
--#define QUP_OP_MAX_INPUT_DONE_FLAG	BIT(11)
--#define QUP_OP_MAX_OUTPUT_DONE_FLAG	BIT(10)
--#define QUP_OP_IN_SERVICE_FLAG		BIT(9)
--#define QUP_OP_OUT_SERVICE_FLAG		BIT(8)
--#define QUP_OP_IN_FIFO_FULL			BIT(7)
--#define QUP_OP_OUT_FIFO_FULL		BIT(6)
--#define QUP_OP_IN_FIFO_NOT_EMPTY	BIT(5)
--#define QUP_OP_OUT_FIFO_NOT_EMPTY	BIT(4)
--
--/* QUP_IO_MODES fields */
--#define QUP_IO_MODES_FIFO		0
--#define QUP_IO_MODES_BLOCK		1
--#define QUP_IO_MODES_DMOV		2
--#define QUP_IO_MODES_BAM		3
--
--/* QUP_CONFIG fields */
--#define QUP_CONFIG_SPI_MODE			(1 << 8)
--#define QUP_CONFIG_CLOCK_AUTO_GATE	BIT(13)
--#define QUP_CONFIG_NO_INPUT			BIT(7)
--#define QUP_CONFIG_NO_OUTPUT		BIT(6)
--#define QUP_CONFIG_N				0x001f
--
--/* QUP_MX_OUTPUT_CNT only supports
-- * 0:15 bits as Number of writes of
-- * size N to the mini-core per RUN state.
-- * And make the count be multiple of max bytes per word.
-- */
--#define MAX_QUP_MX_OUTPUT_COUNT 0xFFF8
--
--/* QUP Registers */
--enum {
--	QUP_CONFIG = 0x0,
--	QUP_STATE = 0x4,
--	QUP_IO_MODES = 0x8,
--	QUP_SW_RESET = 0xC,
--	QUP_OPERATIONAL = 0x18,
--	QUP_ERROR_FLAGS = 0x1C,
--	QUP_ERROR_FLAGS_EN = 0x20,
--	QUP_TEST_CTRL = 0x24,
--	QUP_OPERATIONAL_MASK = 0x28,
--	QUP_HW_VERSION = 0x30,
--	QUP_MX_READ_CNT = 0x208,
--	QUP_MX_INPUT_CNT = 0x200,
--	QUP_MX_OUTPUT_CNT = 0x100,
--	QUP_MX_OUTPUT_CNT_CURRENT = 0x104,
--	QUP_OUTPUT_DEBUG = 0x108,
--	QUP_OUTPUT_FIFO_WORD_CNT = 0x10C,
--	QUP_OUTPUT_FIFO_BASE = 0x110,
--	QUP_MX_WRITE_CNT = 0x150,
--	QUP_MX_WRITE_CNT_CURRENT = 0x154,
--	QUP_INPUT_READ_CUR = 0x20C,
--	QUP_INPUT_DEBUG = 0x210,
--	QUP_INPUT_FIFO_CNT = 0x214,
--	QUP_INPUT_FIFO_BASE = 0x218,
--	QUP_I2C_CLK_CTL = 0x400,
--	QUP_I2C_STATUS = 0x404,
--};
--
--/* QUP States and reset values */
--enum qup_state{
--	QUP_RESET_STATE = 0,
--	QUP_RUN_STATE = 1U,
--	QUP_STATE_MASK = 3U,
--	QUP_PAUSE_STATE = 3U,
--	QUP_STATE_VALID = 1U << 2,
--	QUP_I2C_MAST_GEN = 1U << 4,
--	QUP_OPERATIONAL_RESET = 0xFF0,
--	QUP_I2C_STATUS_RESET = 0xFFFFFC,
--};
--
--/* QUP OPERATIONAL FLAGS */
--enum {
--	QUP_OUT_SVC_FLAG = 1U << 8,
--	QUP_IN_SVC_FLAG = 1U << 9,
--	QUP_MX_INPUT_DONE = 1U << 11,
--};
--
--#endif				/* __QUP__ */
+new file mode 100755
+index 0000000..8bb6d28
+--- /dev/null
++++ b/bootable/bootloader/lk/platform/msm_shared/include/qup.h
+@@ -0,0 +1,141 @@
++/* Copyright (c) 2017, The Linux Foundation. All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions are
++ * met:
++ *  * Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ *  * Redistributions in binary form must reproduce the above
++ *    copyright notice, this list of conditions and the following
++ *    disclaimer in the documentation and/or other materials provided
++ *    with the distribution.
++ *  * Neither the name of The Linux Foundation, Inc. nor the names of its
++ *    contributors may be used to endorse or promote products derived
++ *    from this software without specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
++ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
++ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
++ * ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
++ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
++ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
++ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
++ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
++ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#ifndef  __QUP__
++#define  __QUP__
++
++#include <stdint.h>
++
++/* QUP_IO_MODES fields */
++#define QUP_IO_MODES_OUTPUT_BIT_SHIFT_EN  0x00010000
++#define QUP_IO_MODES_PACK_EN              0x00008000
++#define QUP_IO_MODES_UNPACK_EN            0x00004000
++#define QUP_IO_MODES_INPUT_MODE           0x00003000
++#define QUP_IO_MODES_OUTPUT_MODE          0x00000C00
++#define QUP_IO_MODES_INPUT_FIFO_SIZE      0x00000380
++#define QUP_IO_MODES_INPUT_BLOCK_SIZE     0x00000060
++#define QUP_IO_MODES_OUTPUT_FIFO_SIZE     0x0000001C
++#define QUP_IO_MODES_OUTPUT_BLOCK_SIZE    0x00000003
++
++#define INPUT_BLOCK_SZ_SHIFT		5
++#define INPUT_FIFO_SZ_SHIFT			7
++#define OUTPUT_BLOCK_SZ_SHIFT		0
++#define OUTPUT_FIFO_SZ_SHIFT		2
++#define OUTPUT_MODE_SHIFT			10
++#define INPUT_MODE_SHIFT			12
++#define INPUT_MODE_MASK		(3 << INPUT_MODE_SHIFT)
++#define OUTPUT_MODE_MASK	(3 << OUTPUT_MODE_SHIFT)
++
++/* QUP_STATE fields */
++#define QUP_STATE_CLEAR_BITS		0x2
++
++/* QUP_ERROR_FLAGS fields */
++#define QUP_ERROR_OUTPUT_OVER_RUN	BIT(5)
++#define QUP_ERROR_INPUT_UNDER_RUN	BIT(4)
++#define QUP_ERROR_OUTPUT_UNDER_RUN	BIT(3)
++#define QUP_ERROR_INPUT_OVER_RUN	BIT(2)
++
++/* QUP_OPERATIONAL fields */
++#define QUP_OP_MAX_INPUT_DONE_FLAG	BIT(11)
++#define QUP_OP_MAX_OUTPUT_DONE_FLAG	BIT(10)
++#define QUP_OP_IN_SERVICE_FLAG		BIT(9)
++#define QUP_OP_OUT_SERVICE_FLAG		BIT(8)
++#define QUP_OP_IN_FIFO_FULL			BIT(7)
++#define QUP_OP_OUT_FIFO_FULL		BIT(6)
++#define QUP_OP_IN_FIFO_NOT_EMPTY	BIT(5)
++#define QUP_OP_OUT_FIFO_NOT_EMPTY	BIT(4)
++
++/* QUP_IO_MODES fields */
++#define QUP_IO_MODES_FIFO		0
++#define QUP_IO_MODES_BLOCK		1
++#define QUP_IO_MODES_DMOV		2
++#define QUP_IO_MODES_BAM		3
++
++/* QUP_CONFIG fields */
++#define QUP_CONFIG_SPI_MODE			(1 << 8)
++#define QUP_CONFIG_CLOCK_AUTO_GATE	BIT(13)
++#define QUP_CONFIG_NO_INPUT			BIT(7)
++#define QUP_CONFIG_NO_OUTPUT		BIT(6)
++#define QUP_CONFIG_N				0x001f
++
++/* QUP_MX_OUTPUT_CNT only supports
++ * 0:15 bits as Number of writes of
++ * size N to the mini-core per RUN state.
++ * And make the count be multiple of max bytes per word.
++ */
++#define MAX_QUP_MX_OUTPUT_COUNT 0xFFF8
++
++/* QUP Registers */
++enum {
++	QUP_CONFIG = 0x0,
++	QUP_STATE = 0x4,
++	QUP_IO_MODES = 0x8,
++	QUP_SW_RESET = 0xC,
++	QUP_OPERATIONAL = 0x18,
++	QUP_ERROR_FLAGS = 0x1C,
++	QUP_ERROR_FLAGS_EN = 0x20,
++	QUP_TEST_CTRL = 0x24,
++	QUP_OPERATIONAL_MASK = 0x28,
++	QUP_HW_VERSION = 0x30,
++	QUP_MX_READ_CNT = 0x208,
++	QUP_MX_INPUT_CNT = 0x200,
++	QUP_MX_OUTPUT_CNT = 0x100,
++	QUP_MX_OUTPUT_CNT_CURRENT = 0x104,
++	QUP_OUTPUT_DEBUG = 0x108,
++	QUP_OUTPUT_FIFO_WORD_CNT = 0x10C,
++	QUP_OUTPUT_FIFO_BASE = 0x110,
++	QUP_MX_WRITE_CNT = 0x150,
++	QUP_MX_WRITE_CNT_CURRENT = 0x154,
++	QUP_INPUT_READ_CUR = 0x20C,
++	QUP_INPUT_DEBUG = 0x210,
++	QUP_INPUT_FIFO_CNT = 0x214,
++	QUP_INPUT_FIFO_BASE = 0x218,
++	QUP_I2C_CLK_CTL = 0x400,
++	QUP_I2C_STATUS = 0x404,
++};
++
++/* QUP States and reset values */
++enum qup_state{
++	QUP_RESET_STATE = 0,
++	QUP_RUN_STATE = 1U,
++	QUP_STATE_MASK = 3U,
++	QUP_PAUSE_STATE = 3U,
++	QUP_STATE_VALID = 1U << 2,
++	QUP_I2C_MAST_GEN = 1U << 4,
++	QUP_OPERATIONAL_RESET = 0xFF0,
++	QUP_I2C_STATUS_RESET = 0xFFFFFC,
++};
++
++/* QUP OPERATIONAL FLAGS */
++enum {
++	QUP_OUT_SVC_FLAG = 1U << 8,
++	QUP_IN_SVC_FLAG = 1U << 9,
++	QUP_MX_INPUT_DONE = 1U << 11,
++};
++
++#endif				/* __QUP__ */
 diff --git a/bootable/bootloader/lk/platform/msm_shared/include/regulator.h b/bootable/bootloader/lk/platform/msm_shared/include/regulator.h
-old mode 100755
-new mode 100644
-index 03a8a51..9a54063
+old mode 100644
+new mode 100755
+index 9a54063..03a8a51
 --- a/bootable/bootloader/lk/platform/msm_shared/include/regulator.h
 +++ b/bootable/bootloader/lk/platform/msm_shared/include/regulator.h
-@@ -53,6 +53,5 @@
+@@ -53,5 +53,6 @@
  
  void regulator_enable();
  void regulator_disable();
--void spi_panel_regulator_enable();
++void spi_panel_regulator_enable();
  
  #endif
 diff --git a/bootable/bootloader/lk/platform/msm_shared/include/splash.h b/bootable/bootloader/lk/platform/msm_shared/include/splash.h
-old mode 100755
-new mode 100644
-index 15a6ce9..0e6b02c
+old mode 100644
+new mode 100755
+index 0e6b02c..15a6ce9
 --- a/bootable/bootloader/lk/platform/msm_shared/include/splash.h
 +++ b/bootable/bootloader/lk/platform/msm_shared/include/splash.h
-@@ -33,6 +33,7 @@
+@@ -33,7 +33,6 @@
  #define SPLASH_IMAGE_WIDTH     113
  #define SPLASH_IMAGE_HEIGHT    124
  
-+#if (!DISPLAY_TYPE_MIPI)
+-#if (!DISPLAY_TYPE_MIPI)
  /* This image is (SPLASH_IMAGE_WIDTH x SPLASH_IMAGE_WIDTH) raw image */
  static char imageBuffer[] = {
  
-@@ -3542,6 +3543,7 @@ static char imageBuffer[] = {
+@@ -3543,7 +3542,6 @@ static char imageBuffer[] = {
  
  };
  
-+#else
+-#else
  /* This image is 228x113 raw Image resembling QuIC logo*/
  
  static char imageBuffer_rgb888[] = {
-@@ -8801,5 +8803,6 @@ static char imageBuffer_rgb888[] = {
+@@ -8803,6 +8801,5 @@ static char imageBuffer_rgb888[] = {
  	0x00, 0x00, 0x00, 0x00,
  	0x00, 0x00, 0x00, 0x00,
  };
-+#endif
+-#endif
  
  #endif
 diff --git a/bootable/bootloader/lk/platform/msm_shared/mdss_spi.c b/bootable/bootloader/lk/platform/msm_shared/mdss_spi.c
-deleted file mode 100755
-index 79193c1..0000000
---- a/bootable/bootloader/lk/platform/msm_shared/mdss_spi.c
-+++ /dev/null
-@@ -1,143 +0,0 @@
--/* Copyright (c) 2017, The Linux Foundation. All rights reserved.
-- *
-- * Redistribution and use in source and binary forms, with or without
-- * modification, are permitted provided that the following conditions are
-- * met:
-- *     * Redistributions of source code must retain the above copyright
-- *       notice, this list of conditions and the following disclaimer.
-- *     * Redistributions in binary form must reproduce the above
-- *       copyright notice, this list of conditions and the following
-- *       disclaimer in the documentation and/or other materials provided
-- *       with the distribution.
-- *     * Neither the name of The Linux Foundation nor the names of its
-- *       contributors may be used to endorse or promote products derived
-- *       from this software without specific prior written permission.
-- *
-- * THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
-- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
-- * ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
-- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
-- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
-- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-- *
-- */
--
--#include <spi_qup.h>
--#include <msm_panel.h>
--#include <target/display.h>
--#include <platform/gpio.h>
--
--static struct qup_spi_dev *dev = NULL;
--
--int mdss_spi_write_cmd(const char *buf)
--{
--	int ret = 0;
--
--	if (!dev) {
--		dprintf(CRITICAL, "SPI has not been initialized\n");
--		return -ENODEV;
--	}
--
--	dev->bytes_per_word = 1;
--	dev->bit_shift_en = 1;
--
--	gpio_set(dc_gpio.pin_id, 0);
--	ret = spi_qup_transfer(dev, buf, 1);
--	gpio_set(dc_gpio.pin_id, 2);
--	if (ret)
--		dprintf(CRITICAL, "Send SPI command to panel failed\n");
--
--	return ret;
--}
--
--int mdss_spi_write_data(const char *buf, size_t len)
--{
--	int ret = 0;
--
--	if (!dev) {
--		dprintf(CRITICAL, "SPI has not been initialized\n");
--		return -ENODEV;
--	}
--
--	dev->bytes_per_word = 1;
--	dev->bit_shift_en = 1;
--
--	gpio_set(dc_gpio.pin_id, 2);
--	ret = spi_qup_transfer(dev, buf, len);
--	if (ret)
--		dprintf(CRITICAL, "Send SPI parameters to panel failed\n");
--
--	return ret;
--}
--
--int mdss_spi_write_frame(const char *buf, size_t len)
--{
--	int ret = 0;
--
--	if (!dev) {
--		dprintf(CRITICAL, "SPI has not been initialized\n");
--		return -ENODEV;
--	}
--
--	dev->bytes_per_word = 2;
--	dev->bit_shift_en = 1;
--	dev->unpack_en = 0;
--
--	gpio_set(dc_gpio.pin_id, 2);
--	ret = spi_qup_transfer(dev, buf, len);
--
--	return ret;
--}
--
--int mdss_spi_panel_init(struct msm_panel_info *pinfo)
--{
--	int cmd_count = 0;
--	int ret = 0;
--
--	if(!dev) {
--		dev = qup_blsp_spi_init(SPI_BLSP_ID_1, SPI_QUP_ID_5);
--		if (!dev) {
--			dprintf(CRITICAL, "Failed initializing SPI\n");
--			return -ENODEV;
--		}
--	}
--
--	//take the gpio15 output , pin state is high
--	gpio_tlmm_config(dc_gpio.pin_id, 0,
--				dc_gpio.pin_direction, dc_gpio.pin_pull,
--				dc_gpio.pin_strength, dc_gpio.pin_state);
--
--
--	while (cmd_count < pinfo->spi.num_of_panel_cmds) {
--		mdss_spi_write_cmd(pinfo->spi.panel_cmds[cmd_count].payload);
--
--		if (pinfo->spi.panel_cmds[cmd_count].size > 1)
--			mdss_spi_write_data(pinfo->spi.panel_cmds[cmd_count].payload + 1,
--					pinfo->spi.panel_cmds[cmd_count].size - 1);
--
--		if (pinfo->spi.panel_cmds[cmd_count].wait)
--			mdelay(pinfo->spi.panel_cmds[cmd_count].wait);
--
--		cmd_count ++;
--	}
--
--	return 0;
--}
--
--int mdss_spi_on(struct msm_panel_info *pinfo, struct fbcon_config *fb)
--{
--	int buf_size = 0;
--	int ret = 0;
--
--	buf_size =  fb->width * fb->height * (fb->bpp / 8);
--	ret = mdss_spi_write_frame(fb->base, buf_size);
--	if (ret)
--		dprintf(CRITICAL, "Send SPI frame data to panel failed\n");
--
--	return ret;
--}
+new file mode 100755
+index 0000000..79193c1
+--- /dev/null
++++ b/bootable/bootloader/lk/platform/msm_shared/mdss_spi.c
+@@ -0,0 +1,143 @@
++/* Copyright (c) 2017, The Linux Foundation. All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions are
++ * met:
++ *     * Redistributions of source code must retain the above copyright
++ *       notice, this list of conditions and the following disclaimer.
++ *     * Redistributions in binary form must reproduce the above
++ *       copyright notice, this list of conditions and the following
++ *       disclaimer in the documentation and/or other materials provided
++ *       with the distribution.
++ *     * Neither the name of The Linux Foundation nor the names of its
++ *       contributors may be used to endorse or promote products derived
++ *       from this software without specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
++ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
++ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
++ * ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
++ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
++ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
++ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
++ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
++ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ *
++ */
++
++#include <spi_qup.h>
++#include <msm_panel.h>
++#include <target/display.h>
++#include <platform/gpio.h>
++
++static struct qup_spi_dev *dev = NULL;
++
++int mdss_spi_write_cmd(const char *buf)
++{
++	int ret = 0;
++
++	if (!dev) {
++		dprintf(CRITICAL, "SPI has not been initialized\n");
++		return -ENODEV;
++	}
++
++	dev->bytes_per_word = 1;
++	dev->bit_shift_en = 1;
++
++	gpio_set(dc_gpio.pin_id, 0);
++	ret = spi_qup_transfer(dev, buf, 1);
++	gpio_set(dc_gpio.pin_id, 2);
++	if (ret)
++		dprintf(CRITICAL, "Send SPI command to panel failed\n");
++
++	return ret;
++}
++
++int mdss_spi_write_data(const char *buf, size_t len)
++{
++	int ret = 0;
++
++	if (!dev) {
++		dprintf(CRITICAL, "SPI has not been initialized\n");
++		return -ENODEV;
++	}
++
++	dev->bytes_per_word = 1;
++	dev->bit_shift_en = 1;
++
++	gpio_set(dc_gpio.pin_id, 2);
++	ret = spi_qup_transfer(dev, buf, len);
++	if (ret)
++		dprintf(CRITICAL, "Send SPI parameters to panel failed\n");
++
++	return ret;
++}
++
++int mdss_spi_write_frame(const char *buf, size_t len)
++{
++	int ret = 0;
++
++	if (!dev) {
++		dprintf(CRITICAL, "SPI has not been initialized\n");
++		return -ENODEV;
++	}
++
++	dev->bytes_per_word = 2;
++	dev->bit_shift_en = 1;
++	dev->unpack_en = 0;
++
++	gpio_set(dc_gpio.pin_id, 2);
++	ret = spi_qup_transfer(dev, buf, len);
++
++	return ret;
++}
++
++int mdss_spi_panel_init(struct msm_panel_info *pinfo)
++{
++	int cmd_count = 0;
++	int ret = 0;
++
++	if(!dev) {
++		dev = qup_blsp_spi_init(SPI_BLSP_ID_1, SPI_QUP_ID_5);
++		if (!dev) {
++			dprintf(CRITICAL, "Failed initializing SPI\n");
++			return -ENODEV;
++		}
++	}
++
++	//take the gpio15 output , pin state is high
++	gpio_tlmm_config(dc_gpio.pin_id, 0,
++				dc_gpio.pin_direction, dc_gpio.pin_pull,
++				dc_gpio.pin_strength, dc_gpio.pin_state);
++
++
++	while (cmd_count < pinfo->spi.num_of_panel_cmds) {
++		mdss_spi_write_cmd(pinfo->spi.panel_cmds[cmd_count].payload);
++
++		if (pinfo->spi.panel_cmds[cmd_count].size > 1)
++			mdss_spi_write_data(pinfo->spi.panel_cmds[cmd_count].payload + 1,
++					pinfo->spi.panel_cmds[cmd_count].size - 1);
++
++		if (pinfo->spi.panel_cmds[cmd_count].wait)
++			mdelay(pinfo->spi.panel_cmds[cmd_count].wait);
++
++		cmd_count ++;
++	}
++
++	return 0;
++}
++
++int mdss_spi_on(struct msm_panel_info *pinfo, struct fbcon_config *fb)
++{
++	int buf_size = 0;
++	int ret = 0;
++
++	buf_size =  fb->width * fb->height * (fb->bpp / 8);
++	ret = mdss_spi_write_frame(fb->base, buf_size);
++	if (ret)
++		dprintf(CRITICAL, "Send SPI frame data to panel failed\n");
++
++	return ret;
++}
 diff --git a/bootable/bootloader/lk/platform/msm_shared/rules.mk b/bootable/bootloader/lk/platform/msm_shared/rules.mk
-old mode 100755
-new mode 100644
-index e6596e7..5a39c2d
+old mode 100644
+new mode 100755
+index 5a39c2d..e6596e7
 --- a/bootable/bootloader/lk/platform/msm_shared/rules.mk
 +++ b/bootable/bootloader/lk/platform/msm_shared/rules.mk
-@@ -493,14 +493,12 @@ DEFINES += DISPLAY_TYPE_MDSS=1
+@@ -493,12 +493,14 @@ DEFINES += DISPLAY_TYPE_MDSS=1
  			$(LOCAL_DIR)/certificate.o \
  			$(LOCAL_DIR)/image_verify.o \
  			$(LOCAL_DIR)/i2c_qup.o \
--			$(LOCAL_DIR)/spi_qup.o	\
++			$(LOCAL_DIR)/spi_qup.o	\
                          $(LOCAL_DIR)/qseecom_lk.o \
  			$(LOCAL_DIR)/mdp3.o \
  			$(LOCAL_DIR)/display.o \
  			$(LOCAL_DIR)/mipi_dsi.o \
  			$(LOCAL_DIR)/mipi_dsi_phy.o \
--			$(LOCAL_DIR)/mipi_dsi_autopll.o \
--			$(LOCAL_DIR)/mdss_spi.o
-+			$(LOCAL_DIR)/mipi_dsi_autopll.o
+-			$(LOCAL_DIR)/mipi_dsi_autopll.o
++			$(LOCAL_DIR)/mipi_dsi_autopll.o \
++			$(LOCAL_DIR)/mdss_spi.o
  endif
  
  
 diff --git a/bootable/bootloader/lk/platform/msm_shared/spi_qup.c b/bootable/bootloader/lk/platform/msm_shared/spi_qup.c
-deleted file mode 100755
-index c753188..0000000
---- a/bootable/bootloader/lk/platform/msm_shared/spi_qup.c
-+++ /dev/null
-@@ -1,449 +0,0 @@
--/* Copyright (c) 2017, The Linux Foundation. All rights reserved.
-- *
-- * Redistribution and use in source and binary forms, with or without
-- * modification, are permitted provided that the following conditions are
-- * met:
-- *  * Redistributions of source code must retain the above copyright
-- *    notice, this list of conditions and the following disclaimer.
-- *  * Redistributions in binary form must reproduce the above
-- *    copyright notice, this list of conditions and the following
-- *    disclaimer in the documentation and/or other materials provided
-- *    with the distribution.
-- *  * Neither the name of The Linux Foundation, Inc. nor the names of its
-- *    contributors may be used to endorse or promote products derived
-- *    from this software without specific prior written permission.
-- *
-- * THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
-- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
-- * ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
-- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
-- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
-- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-- */
--
--/*
-- * QUP spi driver for Qualcomm MSM platforms
-- *
-- */
--
--#include <debug.h>
--#include <arch/arm.h>
--#include <reg.h>
--#include <kernel/thread.h>
--#include <stdlib.h>
--#include <string.h>
--#include <gsbi.h>
--#include <spi_qup.h>
--#include <platform/irqs.h>
--#include <platform/iomap.h>
--#include <platform/gpio.h>
--#include <platform/clock.h>
--#include <platform/timer.h>
--#include <platform/interrupts.h>
--
--//#define DEBUGLEVEL 3
--
--static unsigned int spi_get_qup_hw_ver(struct qup_spi_dev *dev)
--{
--	unsigned int data = readl_relaxed(dev->qup_base + QUP_HW_VERSION);
--
--	dprintf(SPEW, "Qup hardware version is 0x%x\n", data);
--	return data;
--}
--
--static void qup_print_status(struct qup_spi_dev *dev)
--{
--	unsigned val;
--	val = readl(dev->qup_base + QUP_CONFIG);
--	dprintf(SPEW, "Qup config is :0x%x\n", val);
--	val = readl(dev->qup_base + QUP_STATE);
--	dprintf(SPEW, "Qup state is :0x%x\n", val);
--	val = readl(dev->qup_base + QUP_IO_MODES);
--	dprintf(SPEW, "Qup mode is :0x%x\n", val);
--	val = readl(dev->qup_base + SPI_IO_CONTROL);
--	dprintf(SPEW, "SPI_IO_CONTROL is :0x%x\n", val);
--	val = readl(dev->qup_base + SPI_CONFIG);
--	dprintf(SPEW, "SPI_CONFIG is :0x%x\n", val);
--	val = readl(dev->qup_base + QUP_MX_WRITE_CNT_CURRENT);
--	dprintf(SPEW, "QUP_MX_WRITE_CNT_CURRENT is :0x%x\n", val);
--	val = readl(dev->qup_base + QUP_MX_WRITE_CNT);
--	dprintf(SPEW, "QUP_MX_WRITE_CNT is :0x%x\n", val);
--	val = readl(dev->qup_base + QUP_MX_OUTPUT_CNT_CURRENT);
--	dprintf(SPEW, "QUP_MX_OUTPUT_CNT_CURRENT is :0x%x\n", val);
--	val = readl(dev->qup_base + QUP_MX_OUTPUT_CNT);
--	dprintf(SPEW, "QUP_MX_OUTPUT_CNT is :0x%x\n", val);
--	val = readl(dev->qup_base + QUP_OPERATIONAL);
--	dprintf(SPEW, "QUP_OPERATIONAL is :0x%x\n", val);
--	val = readl(dev->qup_base + QUP_OUTPUT_FIFO_WORD_CNT);
--	dprintf(SPEW, "QUP_OUTPUT_FIFO_WORD_CNT is :0x%x\n", val);
--}
--
--static inline bool qup_state_is_valid(struct qup_spi_dev *dev)
--{
--	unsigned int st = readl_relaxed(dev->qup_base + QUP_STATE);
--
--	return st & QUP_STATE_VALID;
--}
--
--static inline int qup_wait_state_valid(struct qup_spi_dev *dev)
--{
--	unsigned retries = 0xFFFF;
--
--	while (!qup_state_is_valid(dev) && (--retries != 0));
--
--	if(!retries)
--		return -ETIMEDOUT;
--
--	return 0;
--}
--
--static int qup_poll_state(struct qup_spi_dev *dev, unsigned state)
--{
--	int ret = 0;
--	unsigned int status;
--
--	ret = qup_wait_state_valid(dev);
--
--	if(ret)
--		goto exit;
--
--	status = readl(dev->qup_base + QUP_STATE);
--	if ((status & (QUP_STATE_VALID | state)) ==
--		(QUP_STATE_VALID | state))
--			return 0;
--
--exit:
--	dprintf(SPEW, "Polling fail for state:0x%x\n", state);
--	qup_print_status(dev);
--	return ret;
--}
--
--static inline int qup_set_state(struct qup_spi_dev *dev,
--				    enum qup_state state)
--{
--	enum qup_state cur_state;
--
--	if (qup_wait_state_valid(dev)) {
--		qup_print_status(dev);
--		return -EIO;
--	}
--
--	cur_state = readl_relaxed(dev->qup_base + QUP_STATE);
--
--	/* For PAUSE_STATE to RESET_STATE,
--	 * two writes of (0b10) are required.
--	 */
--	if (((cur_state & QUP_STATE_MASK) == QUP_PAUSE_STATE) &&
--			(state == QUP_RESET_STATE)) {
--		writel(QUP_STATE_CLEAR_BITS, dev->qup_base + QUP_STATE);
--		writel(QUP_STATE_CLEAR_BITS, dev->qup_base + QUP_STATE);
--	} else {
--		writel((cur_state & ~QUP_STATE_MASK) | state,
--		       dev->qup_base + QUP_STATE);
--	}
--
--	if (qup_poll_state(dev, state)) {
--		return -EIO;
--	}
--
--	return 0;
--}
--
--static inline void qup_register_init(struct qup_spi_dev *dev)
--{
--	/* Initialize QUP registers */
--	qup_set_state(dev, QUP_RESET_STATE);
--	writel(0x00000001, dev->qup_base + QUP_SW_RESET);
--	qup_wait_state_valid(dev);
--	qup_set_state(dev, QUP_RESET_STATE);
--
--	writel(0x00000000, dev->qup_base + QUP_CONFIG);
--	writel(0x00000000, dev->qup_base + QUP_IO_MODES);
--	writel(0xfff0, dev->qup_base + QUP_OPERATIONAL);
--	writel(0x7e, dev->qup_base + QUP_ERROR_FLAGS);
--	writel(0x00000000, dev->qup_base + QUP_TEST_CTRL);
--	writel(0x00000000, dev->qup_base + QUP_OPERATIONAL_MASK);
--	writel(0x0, dev->qup_base + QUP_MX_INPUT_CNT);
--	writel(0x1, dev->qup_base + QUP_MX_OUTPUT_CNT);
--	writel(0x0, dev->qup_base + QUP_MX_READ_CNT);
--}
--
--static inline void spi_register_init(struct qup_spi_dev *dev)
--{
--	/* Set SPI mini core to QUP config */
--	writel(QUP_CONFIG_SPI_MODE | QUP_CONFIG_NO_INPUT, dev->qup_base + QUP_CONFIG);
--
--	/* Initialize SPI mini core registers */
--	writel(0, dev->qup_base + SPI_CONFIG);
--	writel(SPI_IO_C_NO_TRI_STATE | SPI_IO_C_CS_SELECT_CS0 | SPI_IO_C_CLK_IDLE_HIGH,
--		dev->qup_base + SPI_IO_CONTROL);
--	writel(SPI_ERROR_CLK_OVER_RUN | SPI_ERROR_CLK_UNDER_RUN, dev->qup_base + SPI_ERROR_FLAGS_EN);
--	writel(0, dev->qup_base + SPI_DEASSERT_WAIT);
--
--	qup_print_status(dev);
--}
--
--static void spi_qup_io_config_block(struct qup_spi_dev *dev, int len)
--{
--	unsigned int config, iomode, mode;
--	unsigned int bits_per_word;
--
--	qup_register_init(dev);
--	spi_register_init(dev);
--
--	/* bytes_per_word valid range is [1-4].
--	 * Other value may not working as expected.
--	 */
--	dev->bytes_per_word = dev->bytes_per_word % 5;
--
--	/* If bytes_per_word not given, use DEFAULT_BYTES_PER_WORD.
--	 */
--	if(!dev->bytes_per_word)
--		dev->bytes_per_word = DEFAULT_BYTES_PER_WORD;
--
--	bits_per_word = dev->bytes_per_word * 8 - 1;
--
--	writel(len / dev->bytes_per_word, dev->qup_base + QUP_MX_OUTPUT_CNT);
--	writel(0, dev->qup_base + QUP_MX_INPUT_CNT);
--	writel(0, dev->qup_base + QUP_MX_READ_CNT);
--	writel(0, dev->qup_base + QUP_MX_WRITE_CNT);
--
--	mode = QUP_IO_MODES_BLOCK;
--	iomode = readl_relaxed(dev->qup_base + QUP_IO_MODES);
--	iomode &= ~(INPUT_MODE_MASK | OUTPUT_MODE_MASK);
--	if(dev->unpack_en)
--		iomode |= QUP_IO_MODES_UNPACK_EN;
--	else
--		iomode &= ~QUP_IO_MODES_UNPACK_EN;
--	iomode |= (mode << OUTPUT_MODE_SHIFT);
--	iomode |= (mode << INPUT_MODE_SHIFT);
--	if(dev->bit_shift_en)
--		iomode |= QUP_IO_MODES_OUTPUT_BIT_SHIFT_EN;
--	else
--		iomode &= ~QUP_IO_MODES_OUTPUT_BIT_SHIFT_EN;
--	writel(iomode, dev->qup_base + QUP_IO_MODES);
--
--	config = readl_relaxed(dev->qup_base + QUP_CONFIG);
--	config |= QUP_CONFIG_NO_INPUT;
--	config |= QUP_CONFIG_SPI_MODE;
--	config |= bits_per_word;
--	writel(config, dev->qup_base + QUP_CONFIG);
--
--	writel(0, dev->qup_base + QUP_OPERATIONAL_MASK);
--
--	unmask_interrupt(dev->qup_irq);
--}
--
--static void spi_qup_fifo_write(struct qup_spi_dev *dev, struct spi_transfer *xfer)
--{
--	const unsigned char *tx_buf = xfer->tx_buf;
--	unsigned int word, state, data;
--	unsigned int idx;
--
--	while (dev->tx_bytes < xfer->len) {
--
--		state = readl_relaxed(dev->qup_base + QUP_OPERATIONAL);
--		if (state & QUP_OP_OUT_FIFO_FULL)
--		{
--			dprintf(SPEW, "%s: oper QUP_OP_OUT_FIFO_FULL: 0x%x"
--				"dev->tx_bytes:0x%x, xfer->len:0x%x\n",
--				__func__, state, dev->tx_bytes, xfer->len);
--			break;
--		}
--
--		word = 0;
--		for (idx = 0; idx < dev->bytes_per_word; idx++, dev->tx_bytes++) {
--
--			if (!tx_buf) {
--				dprintf(CRITICAL, "%s: tx_buf null error.\n", __func__);
--				dev->tx_bytes += dev->bytes_per_word;
--				break;
--			}
--			data = dev->tx_bytes < xfer->len ? tx_buf[dev->tx_bytes] : 0;
--			word |= data << (BITS_PER_BYTE * idx);
--		}
--
--		writel(word, dev->qup_base + QUP_OUTPUT_FIFO_BASE);
--	}
--}
--
--int _spi_qup_transfer(struct qup_spi_dev *dev, struct spi_transfer *xfer)
--{
--	int ret = -EIO;
--	int retries = 0xFF;
--	unsigned val;
--
--	dev->xfer     = xfer;
--	dev->tx_bytes = 0;
--
--	spi_qup_io_config_block(dev, xfer->len);
--
--	ret = qup_set_state(dev, QUP_RUN_STATE);
--	if (ret) {
--		dprintf(CRITICAL, "%s: cannot set first RUN state\n", __func__);
--		goto exit;
--	}
--
--	while((readl(dev->qup_base + QUP_MX_OUTPUT_CNT)
--		!= readl(dev->qup_base + QUP_MX_OUTPUT_CNT_CURRENT))
--		&& retries--);
--
--	while(readl(dev->qup_base + QUP_MX_OUTPUT_CNT_CURRENT) ) {
--		val = readl(dev->qup_base + QUP_OPERATIONAL);
--		val &= ~QUP_OP_OUT_SERVICE_FLAG;
--		writel(val, dev->qup_base + QUP_OPERATIONAL);
--
--		ret = qup_set_state(dev, QUP_PAUSE_STATE);
--		if (ret) {
--			dprintf(CRITICAL, "%s: cannot set PAUSE state\n", __func__);
--			goto exit;
--		}
--
--		spi_qup_fifo_write(dev, xfer);
--
--		ret = qup_set_state(dev, QUP_RUN_STATE);
--		if (ret) {
--			dprintf(CRITICAL, "%s: cannot set RUN state\n", __func__);
--			goto exit;
--		}
--	}
--	dprintf(SPEW, "dev->tx_bytes:0x%x, xfer->len:0x%x\n",
--		dev->tx_bytes, xfer->len);
--
--exit:
--	qup_set_state(dev, QUP_RESET_STATE);
--	dev->xfer = NULL;
--	return ret;
--}
--
--/**
-- * @brief Transfer data_size bytes data from tx_buf via spi
-- * @param dev		SPI config structure initialized from qup_blsp_spi_init
-- * @param tx_buf	output buffer pointer
-- * @param data_size	Should be multiple of max bytes per word
-- */
--int spi_qup_transfer(struct qup_spi_dev *dev, const unsigned char * tx_buf, unsigned int data_size)
--{
--	unsigned int cur = 0;
--	struct spi_transfer s_xfer;
--	int ret = -EIO;
--
--	if(!tx_buf)
--		return ret;
--
--	while(data_size > MAX_QUP_MX_OUTPUT_COUNT + cur) {
--		s_xfer.len = MAX_QUP_MX_OUTPUT_COUNT;
--		s_xfer.tx_buf = tx_buf + cur;
--
--		ret = _spi_qup_transfer(dev, &s_xfer);
--		if (ret)
--			goto exit;
--
--		cur += MAX_QUP_MX_OUTPUT_COUNT;
--	}
--
--	s_xfer.len = data_size - cur;
--	s_xfer.tx_buf = tx_buf + cur;
--	ret = _spi_qup_transfer(dev, &s_xfer);
--	if (ret)
--			goto exit;
--	return ret;
--
--exit:
--	dprintf(CRITICAL, "%s: transfer error!\n", __func__);
--	return ret;
--}
--
--static enum handler_return qup_spi_interrupt(void *arg)
--{
--	struct qup_spi_dev *dev = (struct qup_spi_dev *)arg;
--	unsigned int opflags, qup_err, spi_err;
--
--	if (!dev) {
--		dprintf(CRITICAL,
--			"dev_addr is NULL, that means spi_qup_init failed...\n");
--		return INT_NO_RESCHEDULE;
--	}
--
--	qup_err = readl_relaxed(dev->qup_base + QUP_ERROR_FLAGS);
--	spi_err = readl_relaxed(dev->qup_base + SPI_ERROR_FLAGS);
--	opflags = readl_relaxed(dev->qup_base + QUP_OPERATIONAL);
--
--	/* Writing a 'one' to the error bit to clear it. */
--	writel(qup_err, dev->qup_base + QUP_ERROR_FLAGS);
--	writel(spi_err, dev->qup_base + SPI_ERROR_FLAGS);
--	writel(opflags, dev->qup_base + QUP_OPERATIONAL);
--
--	if (qup_err) {
--		if (qup_err & QUP_ERROR_OUTPUT_OVER_RUN)
--			dprintf(SPEW, "OUTPUT_OVER_RUN\n");
--		if (qup_err & QUP_ERROR_INPUT_UNDER_RUN)
--			dprintf(SPEW, "INPUT_UNDER_RUN\n");
--		if (qup_err & QUP_ERROR_OUTPUT_UNDER_RUN)
--			dprintf(SPEW, "OUTPUT_UNDER_RUN\n");
--		if (qup_err & QUP_ERROR_INPUT_OVER_RUN)
--			dprintf(SPEW, "INPUT_OVER_RUN\n");
--	}
--
--	if (spi_err) {
--		if (spi_err & SPI_ERROR_CLK_OVER_RUN)
--			dprintf(SPEW, "CLK_OVER_RUN\n");
--		if (spi_err & SPI_ERROR_CLK_UNDER_RUN)
--			dprintf(SPEW, "CLK_UNDER_RUN\n");
--	}
--
--	return INT_NO_RESCHEDULE;
--}
--
--static void qup_spi_sec_init(struct qup_spi_dev *dev)
--{
--	/* Get qup hw version */
--	spi_get_qup_hw_ver(dev);
--
--	qup_register_init(dev);
--	spi_register_init(dev);
--
--	/* Register the GSBIn QUP IRQ */
--	register_int_handler(dev->qup_irq, qup_spi_interrupt, dev);
--
--	/* Then disable it */
--	mask_interrupt(dev->qup_irq);
--}
--
--struct qup_spi_dev *qup_blsp_spi_init(uint8_t blsp_id, uint8_t qup_id)
--{
--	struct qup_spi_dev *dev;
--
--	dev = malloc(sizeof(struct qup_spi_dev));
--	if (!dev) {
--		return NULL;
--	}
--	dev = memset(dev, 0, sizeof(struct qup_spi_dev));
--
--	/* Platform uses BLSP */
--	dev->qup_irq = BLSP_QUP_IRQ(blsp_id, qup_id);
--	dev->qup_base = BLSP_QUP_BASE(blsp_id, qup_id);
--
--	/* Initialize the GPIO for BLSP spi */
--	gpio_config_blsp_spi(blsp_id, qup_id);
--
--	clock_config_blsp_spi(blsp_id, qup_id);
--
--	qup_spi_sec_init(dev);
--
--	return dev;
--}
--
--int qup_spi_deinit(struct qup_spi_dev *dev)
--{
--	/* Disable the qup_irq */
--	mask_interrupt(dev->qup_irq);
--	/* Free the memory used for dev */
--	free(dev);
--	return 0;
--}
+new file mode 100755
+index 0000000..c753188
+--- /dev/null
++++ b/bootable/bootloader/lk/platform/msm_shared/spi_qup.c
+@@ -0,0 +1,449 @@
++/* Copyright (c) 2017, The Linux Foundation. All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions are
++ * met:
++ *  * Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ *  * Redistributions in binary form must reproduce the above
++ *    copyright notice, this list of conditions and the following
++ *    disclaimer in the documentation and/or other materials provided
++ *    with the distribution.
++ *  * Neither the name of The Linux Foundation, Inc. nor the names of its
++ *    contributors may be used to endorse or promote products derived
++ *    from this software without specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
++ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
++ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
++ * ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
++ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
++ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
++ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
++ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
++ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++/*
++ * QUP spi driver for Qualcomm MSM platforms
++ *
++ */
++
++#include <debug.h>
++#include <arch/arm.h>
++#include <reg.h>
++#include <kernel/thread.h>
++#include <stdlib.h>
++#include <string.h>
++#include <gsbi.h>
++#include <spi_qup.h>
++#include <platform/irqs.h>
++#include <platform/iomap.h>
++#include <platform/gpio.h>
++#include <platform/clock.h>
++#include <platform/timer.h>
++#include <platform/interrupts.h>
++
++//#define DEBUGLEVEL 3
++
++static unsigned int spi_get_qup_hw_ver(struct qup_spi_dev *dev)
++{
++	unsigned int data = readl_relaxed(dev->qup_base + QUP_HW_VERSION);
++
++	dprintf(SPEW, "Qup hardware version is 0x%x\n", data);
++	return data;
++}
++
++static void qup_print_status(struct qup_spi_dev *dev)
++{
++	unsigned val;
++	val = readl(dev->qup_base + QUP_CONFIG);
++	dprintf(SPEW, "Qup config is :0x%x\n", val);
++	val = readl(dev->qup_base + QUP_STATE);
++	dprintf(SPEW, "Qup state is :0x%x\n", val);
++	val = readl(dev->qup_base + QUP_IO_MODES);
++	dprintf(SPEW, "Qup mode is :0x%x\n", val);
++	val = readl(dev->qup_base + SPI_IO_CONTROL);
++	dprintf(SPEW, "SPI_IO_CONTROL is :0x%x\n", val);
++	val = readl(dev->qup_base + SPI_CONFIG);
++	dprintf(SPEW, "SPI_CONFIG is :0x%x\n", val);
++	val = readl(dev->qup_base + QUP_MX_WRITE_CNT_CURRENT);
++	dprintf(SPEW, "QUP_MX_WRITE_CNT_CURRENT is :0x%x\n", val);
++	val = readl(dev->qup_base + QUP_MX_WRITE_CNT);
++	dprintf(SPEW, "QUP_MX_WRITE_CNT is :0x%x\n", val);
++	val = readl(dev->qup_base + QUP_MX_OUTPUT_CNT_CURRENT);
++	dprintf(SPEW, "QUP_MX_OUTPUT_CNT_CURRENT is :0x%x\n", val);
++	val = readl(dev->qup_base + QUP_MX_OUTPUT_CNT);
++	dprintf(SPEW, "QUP_MX_OUTPUT_CNT is :0x%x\n", val);
++	val = readl(dev->qup_base + QUP_OPERATIONAL);
++	dprintf(SPEW, "QUP_OPERATIONAL is :0x%x\n", val);
++	val = readl(dev->qup_base + QUP_OUTPUT_FIFO_WORD_CNT);
++	dprintf(SPEW, "QUP_OUTPUT_FIFO_WORD_CNT is :0x%x\n", val);
++}
++
++static inline bool qup_state_is_valid(struct qup_spi_dev *dev)
++{
++	unsigned int st = readl_relaxed(dev->qup_base + QUP_STATE);
++
++	return st & QUP_STATE_VALID;
++}
++
++static inline int qup_wait_state_valid(struct qup_spi_dev *dev)
++{
++	unsigned retries = 0xFFFF;
++
++	while (!qup_state_is_valid(dev) && (--retries != 0));
++
++	if(!retries)
++		return -ETIMEDOUT;
++
++	return 0;
++}
++
++static int qup_poll_state(struct qup_spi_dev *dev, unsigned state)
++{
++	int ret = 0;
++	unsigned int status;
++
++	ret = qup_wait_state_valid(dev);
++
++	if(ret)
++		goto exit;
++
++	status = readl(dev->qup_base + QUP_STATE);
++	if ((status & (QUP_STATE_VALID | state)) ==
++		(QUP_STATE_VALID | state))
++			return 0;
++
++exit:
++	dprintf(SPEW, "Polling fail for state:0x%x\n", state);
++	qup_print_status(dev);
++	return ret;
++}
++
++static inline int qup_set_state(struct qup_spi_dev *dev,
++				    enum qup_state state)
++{
++	enum qup_state cur_state;
++
++	if (qup_wait_state_valid(dev)) {
++		qup_print_status(dev);
++		return -EIO;
++	}
++
++	cur_state = readl_relaxed(dev->qup_base + QUP_STATE);
++
++	/* For PAUSE_STATE to RESET_STATE,
++	 * two writes of (0b10) are required.
++	 */
++	if (((cur_state & QUP_STATE_MASK) == QUP_PAUSE_STATE) &&
++			(state == QUP_RESET_STATE)) {
++		writel(QUP_STATE_CLEAR_BITS, dev->qup_base + QUP_STATE);
++		writel(QUP_STATE_CLEAR_BITS, dev->qup_base + QUP_STATE);
++	} else {
++		writel((cur_state & ~QUP_STATE_MASK) | state,
++		       dev->qup_base + QUP_STATE);
++	}
++
++	if (qup_poll_state(dev, state)) {
++		return -EIO;
++	}
++
++	return 0;
++}
++
++static inline void qup_register_init(struct qup_spi_dev *dev)
++{
++	/* Initialize QUP registers */
++	qup_set_state(dev, QUP_RESET_STATE);
++	writel(0x00000001, dev->qup_base + QUP_SW_RESET);
++	qup_wait_state_valid(dev);
++	qup_set_state(dev, QUP_RESET_STATE);
++
++	writel(0x00000000, dev->qup_base + QUP_CONFIG);
++	writel(0x00000000, dev->qup_base + QUP_IO_MODES);
++	writel(0xfff0, dev->qup_base + QUP_OPERATIONAL);
++	writel(0x7e, dev->qup_base + QUP_ERROR_FLAGS);
++	writel(0x00000000, dev->qup_base + QUP_TEST_CTRL);
++	writel(0x00000000, dev->qup_base + QUP_OPERATIONAL_MASK);
++	writel(0x0, dev->qup_base + QUP_MX_INPUT_CNT);
++	writel(0x1, dev->qup_base + QUP_MX_OUTPUT_CNT);
++	writel(0x0, dev->qup_base + QUP_MX_READ_CNT);
++}
++
++static inline void spi_register_init(struct qup_spi_dev *dev)
++{
++	/* Set SPI mini core to QUP config */
++	writel(QUP_CONFIG_SPI_MODE | QUP_CONFIG_NO_INPUT, dev->qup_base + QUP_CONFIG);
++
++	/* Initialize SPI mini core registers */
++	writel(0, dev->qup_base + SPI_CONFIG);
++	writel(SPI_IO_C_NO_TRI_STATE | SPI_IO_C_CS_SELECT_CS0 | SPI_IO_C_CLK_IDLE_HIGH,
++		dev->qup_base + SPI_IO_CONTROL);
++	writel(SPI_ERROR_CLK_OVER_RUN | SPI_ERROR_CLK_UNDER_RUN, dev->qup_base + SPI_ERROR_FLAGS_EN);
++	writel(0, dev->qup_base + SPI_DEASSERT_WAIT);
++
++	qup_print_status(dev);
++}
++
++static void spi_qup_io_config_block(struct qup_spi_dev *dev, int len)
++{
++	unsigned int config, iomode, mode;
++	unsigned int bits_per_word;
++
++	qup_register_init(dev);
++	spi_register_init(dev);
++
++	/* bytes_per_word valid range is [1-4].
++	 * Other value may not working as expected.
++	 */
++	dev->bytes_per_word = dev->bytes_per_word % 5;
++
++	/* If bytes_per_word not given, use DEFAULT_BYTES_PER_WORD.
++	 */
++	if(!dev->bytes_per_word)
++		dev->bytes_per_word = DEFAULT_BYTES_PER_WORD;
++
++	bits_per_word = dev->bytes_per_word * 8 - 1;
++
++	writel(len / dev->bytes_per_word, dev->qup_base + QUP_MX_OUTPUT_CNT);
++	writel(0, dev->qup_base + QUP_MX_INPUT_CNT);
++	writel(0, dev->qup_base + QUP_MX_READ_CNT);
++	writel(0, dev->qup_base + QUP_MX_WRITE_CNT);
++
++	mode = QUP_IO_MODES_BLOCK;
++	iomode = readl_relaxed(dev->qup_base + QUP_IO_MODES);
++	iomode &= ~(INPUT_MODE_MASK | OUTPUT_MODE_MASK);
++	if(dev->unpack_en)
++		iomode |= QUP_IO_MODES_UNPACK_EN;
++	else
++		iomode &= ~QUP_IO_MODES_UNPACK_EN;
++	iomode |= (mode << OUTPUT_MODE_SHIFT);
++	iomode |= (mode << INPUT_MODE_SHIFT);
++	if(dev->bit_shift_en)
++		iomode |= QUP_IO_MODES_OUTPUT_BIT_SHIFT_EN;
++	else
++		iomode &= ~QUP_IO_MODES_OUTPUT_BIT_SHIFT_EN;
++	writel(iomode, dev->qup_base + QUP_IO_MODES);
++
++	config = readl_relaxed(dev->qup_base + QUP_CONFIG);
++	config |= QUP_CONFIG_NO_INPUT;
++	config |= QUP_CONFIG_SPI_MODE;
++	config |= bits_per_word;
++	writel(config, dev->qup_base + QUP_CONFIG);
++
++	writel(0, dev->qup_base + QUP_OPERATIONAL_MASK);
++
++	unmask_interrupt(dev->qup_irq);
++}
++
++static void spi_qup_fifo_write(struct qup_spi_dev *dev, struct spi_transfer *xfer)
++{
++	const unsigned char *tx_buf = xfer->tx_buf;
++	unsigned int word, state, data;
++	unsigned int idx;
++
++	while (dev->tx_bytes < xfer->len) {
++
++		state = readl_relaxed(dev->qup_base + QUP_OPERATIONAL);
++		if (state & QUP_OP_OUT_FIFO_FULL)
++		{
++			dprintf(SPEW, "%s: oper QUP_OP_OUT_FIFO_FULL: 0x%x"
++				"dev->tx_bytes:0x%x, xfer->len:0x%x\n",
++				__func__, state, dev->tx_bytes, xfer->len);
++			break;
++		}
++
++		word = 0;
++		for (idx = 0; idx < dev->bytes_per_word; idx++, dev->tx_bytes++) {
++
++			if (!tx_buf) {
++				dprintf(CRITICAL, "%s: tx_buf null error.\n", __func__);
++				dev->tx_bytes += dev->bytes_per_word;
++				break;
++			}
++			data = dev->tx_bytes < xfer->len ? tx_buf[dev->tx_bytes] : 0;
++			word |= data << (BITS_PER_BYTE * idx);
++		}
++
++		writel(word, dev->qup_base + QUP_OUTPUT_FIFO_BASE);
++	}
++}
++
++int _spi_qup_transfer(struct qup_spi_dev *dev, struct spi_transfer *xfer)
++{
++	int ret = -EIO;
++	int retries = 0xFF;
++	unsigned val;
++
++	dev->xfer     = xfer;
++	dev->tx_bytes = 0;
++
++	spi_qup_io_config_block(dev, xfer->len);
++
++	ret = qup_set_state(dev, QUP_RUN_STATE);
++	if (ret) {
++		dprintf(CRITICAL, "%s: cannot set first RUN state\n", __func__);
++		goto exit;
++	}
++
++	while((readl(dev->qup_base + QUP_MX_OUTPUT_CNT)
++		!= readl(dev->qup_base + QUP_MX_OUTPUT_CNT_CURRENT))
++		&& retries--);
++
++	while(readl(dev->qup_base + QUP_MX_OUTPUT_CNT_CURRENT) ) {
++		val = readl(dev->qup_base + QUP_OPERATIONAL);
++		val &= ~QUP_OP_OUT_SERVICE_FLAG;
++		writel(val, dev->qup_base + QUP_OPERATIONAL);
++
++		ret = qup_set_state(dev, QUP_PAUSE_STATE);
++		if (ret) {
++			dprintf(CRITICAL, "%s: cannot set PAUSE state\n", __func__);
++			goto exit;
++		}
++
++		spi_qup_fifo_write(dev, xfer);
++
++		ret = qup_set_state(dev, QUP_RUN_STATE);
++		if (ret) {
++			dprintf(CRITICAL, "%s: cannot set RUN state\n", __func__);
++			goto exit;
++		}
++	}
++	dprintf(SPEW, "dev->tx_bytes:0x%x, xfer->len:0x%x\n",
++		dev->tx_bytes, xfer->len);
++
++exit:
++	qup_set_state(dev, QUP_RESET_STATE);
++	dev->xfer = NULL;
++	return ret;
++}
++
++/**
++ * @brief Transfer data_size bytes data from tx_buf via spi
++ * @param dev		SPI config structure initialized from qup_blsp_spi_init
++ * @param tx_buf	output buffer pointer
++ * @param data_size	Should be multiple of max bytes per word
++ */
++int spi_qup_transfer(struct qup_spi_dev *dev, const unsigned char * tx_buf, unsigned int data_size)
++{
++	unsigned int cur = 0;
++	struct spi_transfer s_xfer;
++	int ret = -EIO;
++
++	if(!tx_buf)
++		return ret;
++
++	while(data_size > MAX_QUP_MX_OUTPUT_COUNT + cur) {
++		s_xfer.len = MAX_QUP_MX_OUTPUT_COUNT;
++		s_xfer.tx_buf = tx_buf + cur;
++
++		ret = _spi_qup_transfer(dev, &s_xfer);
++		if (ret)
++			goto exit;
++
++		cur += MAX_QUP_MX_OUTPUT_COUNT;
++	}
++
++	s_xfer.len = data_size - cur;
++	s_xfer.tx_buf = tx_buf + cur;
++	ret = _spi_qup_transfer(dev, &s_xfer);
++	if (ret)
++			goto exit;
++	return ret;
++
++exit:
++	dprintf(CRITICAL, "%s: transfer error!\n", __func__);
++	return ret;
++}
++
++static enum handler_return qup_spi_interrupt(void *arg)
++{
++	struct qup_spi_dev *dev = (struct qup_spi_dev *)arg;
++	unsigned int opflags, qup_err, spi_err;
++
++	if (!dev) {
++		dprintf(CRITICAL,
++			"dev_addr is NULL, that means spi_qup_init failed...\n");
++		return INT_NO_RESCHEDULE;
++	}
++
++	qup_err = readl_relaxed(dev->qup_base + QUP_ERROR_FLAGS);
++	spi_err = readl_relaxed(dev->qup_base + SPI_ERROR_FLAGS);
++	opflags = readl_relaxed(dev->qup_base + QUP_OPERATIONAL);
++
++	/* Writing a 'one' to the error bit to clear it. */
++	writel(qup_err, dev->qup_base + QUP_ERROR_FLAGS);
++	writel(spi_err, dev->qup_base + SPI_ERROR_FLAGS);
++	writel(opflags, dev->qup_base + QUP_OPERATIONAL);
++
++	if (qup_err) {
++		if (qup_err & QUP_ERROR_OUTPUT_OVER_RUN)
++			dprintf(SPEW, "OUTPUT_OVER_RUN\n");
++		if (qup_err & QUP_ERROR_INPUT_UNDER_RUN)
++			dprintf(SPEW, "INPUT_UNDER_RUN\n");
++		if (qup_err & QUP_ERROR_OUTPUT_UNDER_RUN)
++			dprintf(SPEW, "OUTPUT_UNDER_RUN\n");
++		if (qup_err & QUP_ERROR_INPUT_OVER_RUN)
++			dprintf(SPEW, "INPUT_OVER_RUN\n");
++	}
++
++	if (spi_err) {
++		if (spi_err & SPI_ERROR_CLK_OVER_RUN)
++			dprintf(SPEW, "CLK_OVER_RUN\n");
++		if (spi_err & SPI_ERROR_CLK_UNDER_RUN)
++			dprintf(SPEW, "CLK_UNDER_RUN\n");
++	}
++
++	return INT_NO_RESCHEDULE;
++}
++
++static void qup_spi_sec_init(struct qup_spi_dev *dev)
++{
++	/* Get qup hw version */
++	spi_get_qup_hw_ver(dev);
++
++	qup_register_init(dev);
++	spi_register_init(dev);
++
++	/* Register the GSBIn QUP IRQ */
++	register_int_handler(dev->qup_irq, qup_spi_interrupt, dev);
++
++	/* Then disable it */
++	mask_interrupt(dev->qup_irq);
++}
++
++struct qup_spi_dev *qup_blsp_spi_init(uint8_t blsp_id, uint8_t qup_id)
++{
++	struct qup_spi_dev *dev;
++
++	dev = malloc(sizeof(struct qup_spi_dev));
++	if (!dev) {
++		return NULL;
++	}
++	dev = memset(dev, 0, sizeof(struct qup_spi_dev));
++
++	/* Platform uses BLSP */
++	dev->qup_irq = BLSP_QUP_IRQ(blsp_id, qup_id);
++	dev->qup_base = BLSP_QUP_BASE(blsp_id, qup_id);
++
++	/* Initialize the GPIO for BLSP spi */
++	gpio_config_blsp_spi(blsp_id, qup_id);
++
++	clock_config_blsp_spi(blsp_id, qup_id);
++
++	qup_spi_sec_init(dev);
++
++	return dev;
++}
++
++int qup_spi_deinit(struct qup_spi_dev *dev)
++{
++	/* Disable the qup_irq */
++	mask_interrupt(dev->qup_irq);
++	/* Free the memory used for dev */
++	free(dev);
++	return 0;
++}
 diff --git a/bootable/bootloader/lk/platform/msm_shared/spi_qup.h b/bootable/bootloader/lk/platform/msm_shared/spi_qup.h
-deleted file mode 100755
-index 0febf49..0000000
---- a/bootable/bootloader/lk/platform/msm_shared/spi_qup.h
-+++ /dev/null
-@@ -1,113 +0,0 @@
--/* Copyright (c) 2017, The Linux Foundation. All rights reserved.
-- *
-- * Redistribution and use in source and binary forms, with or without
-- * modification, are permitted provided that the following conditions are
-- * met:
-- *  * Redistributions of source code must retain the above copyright
-- *    notice, this list of conditions and the following disclaimer.
-- *  * Redistributions in binary form must reproduce the above
-- *    copyright notice, this list of conditions and the following
-- *    disclaimer in the documentation and/or other materials provided
-- *    with the distribution.
-- *  * Neither the name of The Linux Foundation, Inc. nor the names of its
-- *    contributors may be used to endorse or promote products derived
-- *    from this software without specific prior written permission.
-- *
-- * THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
-- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
-- * ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
-- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
-- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
-- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-- */
--
--#ifndef  __SPI_QUP__
--#define  __SPI_QUP__
--
--#include <stdint.h>
--#include <qup.h>
--
--/* SPI_ERROR_FLAGS and SPI_ERROR_FLAGS_EN fields */
--#define SPI_ERROR_CLK_OVER_RUN		BIT(1)
--#define SPI_ERROR_CLK_UNDER_RUN		BIT(0)
--
--#define SPI_CONFIG                    0x0300
--#define SPI_IO_CONTROL                0x0304
--#define SPI_IO_MODES                  0x0008
--#define SPI_SW_RESET                  0x000C
--#define SPI_TIME_OUT_CURRENT          0x0014
--#define SPI_MX_OUTPUT_COUNT           0x0100
--#define SPI_MX_OUTPUT_CNT_CURRENT     0x0104
--#define SPI_MX_INPUT_COUNT            0x0200
--#define SPI_MX_INPUT_CNT_CURRENT      0x0204
--#define SPI_MX_READ_COUNT             0x0208
--#define SPI_MX_READ_CNT_CURRENT       0x020C
--#define SPI_OPERATIONAL               0x0018
--#define SPI_ERROR_FLAGS               0x001C
--#define SPI_ERROR_FLAGS_EN            0x0020
--#define SPI_DEASSERT_WAIT             0x0310
--#define SPI_OUTPUT_DEBUG              0x0108
--#define SPI_INPUT_DEBUG               0x0210
--#define SPI_TEST_CTRL                 0x0024
--#define SPI_OUTPUT_FIFO               0x0110
--#define SPI_INPUT_FIFO                0x0218
--#define SPI_STATE                     0x0004
--
--#define SPI_IO_C_NO_TRI_STATE		BIT(0)
--#define SPI_IO_C_CLK_ALWAYS_ON		BIT(9)
--#define SPI_IO_C_MX_CS_MODE			BIT(8)
--#define SPI_IO_C_CS0_ACTIVE_HIGH	BIT(4)
--#define SPI_IO_C_CS_SELECT_CS0		00 << 2
--#define SPI_IO_C_CLK_IDLE_HIGH		BIT(10)
--
--/* SPI_CONFIG fields */
--#define SPI_CONFIG_HS_MODE			BIT(10)
--#define SPI_CONFIG_INPUT_FIRST		BIT(9)
--#define SPI_CONFIG_LOOPBACK			BIT(8)
--
--#define DEFAULT_BYTES_PER_WORD	0x2
--
--#define BITS_PER_BYTE 	8
--
--#define EIO         5
--#define ENOMEM      12
--#define EBUSY       16
--#define ENODEV      19
--#define ENOSYS      38
--#define EPROTONOSUPPORT 93
--#define ETIMEDOUT   110
--
--struct spi_transfer {
--	const unsigned char	*tx_buf;
--	int	len;
--};
--
--/**
-- * qup_spi_dev - spi device config structure
-- * @ qup_base - base register address of QUP.
-- * @ qup_irq - irq number of QUP.
-- * @ tx_bytes - current transfered output data length in bytes
-- * @ bytes_per_word - bytes number per word write to FIFO, valid range [1-4]
-- * @ xfer - pointer to SPI transfer contents structure.
-- */
--struct qup_spi_dev {
--	unsigned int qup_base;
--	int qup_irq;
--	int tx_bytes;
--	unsigned int bytes_per_word;
--	unsigned int bit_shift_en;
--	unsigned int unpack_en;
--	struct spi_transfer *xfer;
--};
--
--/* Function Definitions */
--struct qup_spi_dev *qup_blsp_spi_init(uint8_t blsp_id, uint8_t qup_id);
--int qup_spi_deinit(struct qup_spi_dev *dev);
--int spi_qup_transfer(struct qup_spi_dev *dev, const unsigned char * tx_buf, unsigned int data_size);
--
--#endif				/* __SPI_QUP__ */
+new file mode 100755
+index 0000000..0febf49
+--- /dev/null
++++ b/bootable/bootloader/lk/platform/msm_shared/spi_qup.h
+@@ -0,0 +1,113 @@
++/* Copyright (c) 2017, The Linux Foundation. All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions are
++ * met:
++ *  * Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ *  * Redistributions in binary form must reproduce the above
++ *    copyright notice, this list of conditions and the following
++ *    disclaimer in the documentation and/or other materials provided
++ *    with the distribution.
++ *  * Neither the name of The Linux Foundation, Inc. nor the names of its
++ *    contributors may be used to endorse or promote products derived
++ *    from this software without specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
++ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
++ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
++ * ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
++ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
++ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
++ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
++ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
++ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#ifndef  __SPI_QUP__
++#define  __SPI_QUP__
++
++#include <stdint.h>
++#include <qup.h>
++
++/* SPI_ERROR_FLAGS and SPI_ERROR_FLAGS_EN fields */
++#define SPI_ERROR_CLK_OVER_RUN		BIT(1)
++#define SPI_ERROR_CLK_UNDER_RUN		BIT(0)
++
++#define SPI_CONFIG                    0x0300
++#define SPI_IO_CONTROL                0x0304
++#define SPI_IO_MODES                  0x0008
++#define SPI_SW_RESET                  0x000C
++#define SPI_TIME_OUT_CURRENT          0x0014
++#define SPI_MX_OUTPUT_COUNT           0x0100
++#define SPI_MX_OUTPUT_CNT_CURRENT     0x0104
++#define SPI_MX_INPUT_COUNT            0x0200
++#define SPI_MX_INPUT_CNT_CURRENT      0x0204
++#define SPI_MX_READ_COUNT             0x0208
++#define SPI_MX_READ_CNT_CURRENT       0x020C
++#define SPI_OPERATIONAL               0x0018
++#define SPI_ERROR_FLAGS               0x001C
++#define SPI_ERROR_FLAGS_EN            0x0020
++#define SPI_DEASSERT_WAIT             0x0310
++#define SPI_OUTPUT_DEBUG              0x0108
++#define SPI_INPUT_DEBUG               0x0210
++#define SPI_TEST_CTRL                 0x0024
++#define SPI_OUTPUT_FIFO               0x0110
++#define SPI_INPUT_FIFO                0x0218
++#define SPI_STATE                     0x0004
++
++#define SPI_IO_C_NO_TRI_STATE		BIT(0)
++#define SPI_IO_C_CLK_ALWAYS_ON		BIT(9)
++#define SPI_IO_C_MX_CS_MODE			BIT(8)
++#define SPI_IO_C_CS0_ACTIVE_HIGH	BIT(4)
++#define SPI_IO_C_CS_SELECT_CS0		00 << 2
++#define SPI_IO_C_CLK_IDLE_HIGH		BIT(10)
++
++/* SPI_CONFIG fields */
++#define SPI_CONFIG_HS_MODE			BIT(10)
++#define SPI_CONFIG_INPUT_FIRST		BIT(9)
++#define SPI_CONFIG_LOOPBACK			BIT(8)
++
++#define DEFAULT_BYTES_PER_WORD	0x2
++
++#define BITS_PER_BYTE 	8
++
++#define EIO         5
++#define ENOMEM      12
++#define EBUSY       16
++#define ENODEV      19
++#define ENOSYS      38
++#define EPROTONOSUPPORT 93
++#define ETIMEDOUT   110
++
++struct spi_transfer {
++	const unsigned char	*tx_buf;
++	int	len;
++};
++
++/**
++ * qup_spi_dev - spi device config structure
++ * @ qup_base - base register address of QUP.
++ * @ qup_irq - irq number of QUP.
++ * @ tx_bytes - current transfered output data length in bytes
++ * @ bytes_per_word - bytes number per word write to FIFO, valid range [1-4]
++ * @ xfer - pointer to SPI transfer contents structure.
++ */
++struct qup_spi_dev {
++	unsigned int qup_base;
++	int qup_irq;
++	int tx_bytes;
++	unsigned int bytes_per_word;
++	unsigned int bit_shift_en;
++	unsigned int unpack_en;
++	struct spi_transfer *xfer;
++};
++
++/* Function Definitions */
++struct qup_spi_dev *qup_blsp_spi_init(uint8_t blsp_id, uint8_t qup_id);
++int qup_spi_deinit(struct qup_spi_dev *dev);
++int spi_qup_transfer(struct qup_spi_dev *dev, const unsigned char * tx_buf, unsigned int data_size);
++
++#endif				/* __SPI_QUP__ */
 diff --git a/bootable/bootloader/lk/project/msm8909.mk b/bootable/bootloader/lk/project/msm8909.mk
-old mode 100755
-new mode 100644
-index 55c4c30..04bb1a2
+old mode 100644
+new mode 100755
+index 04bb1a2..55c4c30
 --- a/bootable/bootloader/lk/project/msm8909.mk
 +++ b/bootable/bootloader/lk/project/msm8909.mk
-@@ -36,13 +36,7 @@ ENABLE_BOOT_CONFIG_SUPPORT := 1
+@@ -36,7 +36,13 @@ ENABLE_BOOT_CONFIG_SUPPORT := 1
  
  #DEFINES += WITH_DEBUG_DCC=1
  DEFINES += WITH_DEBUG_LOG_BUF=1
--
--ifeq ($(TARGET_BUILD_VARIANT),user)
--  DEFINES += WITH_DEBUG_UART=0
--else
--  DEFINES += WITH_DEBUG_UART=1
--endif
--
-+DEFINES += WITH_DEBUG_UART=1
+-DEFINES += WITH_DEBUG_UART=1
++
++ifeq ($(TARGET_BUILD_VARIANT),user)
++  DEFINES += WITH_DEBUG_UART=0
++else
++  DEFINES += WITH_DEBUG_UART=1
++endif
++
  #DEFINES += WITH_DEBUG_FBCON=1
  DEFINES += DEVICE_TREE=1
  #DEFINES += MMC_BOOT_BAM=1
 diff --git a/bootable/bootloader/lk/target/init.c b/bootable/bootloader/lk/target/init.c
-old mode 100755
-new mode 100644
-index e686c1c..e513336
+old mode 100644
+new mode 100755
+index e513336..e686c1c
 --- a/bootable/bootloader/lk/target/init.c
 +++ b/bootable/bootloader/lk/target/init.c
-@@ -196,12 +196,6 @@ __WEAK uint8_t target_is_edp()
+@@ -196,6 +196,12 @@ __WEAK uint8_t target_is_edp()
  	return 0;
  }
  
--__WEAK uint8_t target_is_spi()
--{
--	return 0;
--}
--
--
++__WEAK uint8_t target_is_spi()
++{
++	return 0;
++}
++
++
  /* default usb controller to be used. */
  __WEAK const char * target_usb_controller()
  {
 diff --git a/bootable/bootloader/lk/target/msm8909/include/target/display.h b/bootable/bootloader/lk/target/msm8909/include/target/display.h
-old mode 100755
-new mode 100644
-index f70c87d..c939480
+old mode 100644
+new mode 100755
+index c939480..f70c87d
 --- a/bootable/bootloader/lk/target/msm8909/include/target/display.h
 +++ b/bootable/bootloader/lk/target/msm8909/include/target/display.h
-@@ -57,10 +57,6 @@ static struct gpio_pin enn_gpio = {
+@@ -57,6 +57,10 @@ static struct gpio_pin enn_gpio = {
    "msmgpio", 10, 3, 1, 0, 1
  };
  
--static struct gpio_pin dc_gpio = {
--  "msmgpio", 15, 3, 1, 0, 1
--};
--
++static struct gpio_pin dc_gpio = {
++  "msmgpio", 15, 3, 1, 0, 1
++};
++
  static struct gpio_pin te_gpio = {
    0, 0, 0, 0, 0, 0
  };
-@@ -112,7 +108,4 @@ static const uint32_t panel_physical_ctrl[] = {
+@@ -108,4 +112,7 @@ static const uint32_t panel_physical_ctrl[] = {
  #define MIPI_VSYNC_BACK_PORCH_LINES  3
  #define MIPI_VSYNC_FRONT_PORCH_LINES 9
  
--#define SPI_BLSP_ID_1                  1 /* BLSP_ID_1 */
--#define SPI_QUP_ID_5                   5 /* QUP_ID_5 */
--
++#define SPI_BLSP_ID_1                  1 /* BLSP_ID_1 */
++#define SPI_QUP_ID_5                   5 /* QUP_ID_5 */
++
  #endif
 diff --git a/bootable/bootloader/lk/target/msm8909/init.c b/bootable/bootloader/lk/target/msm8909/init.c
-old mode 100755
-new mode 100644
-index c3e4d9d..3dd0dcf
+old mode 100644
+new mode 100755
+index 3dd0dcf..c3e4d9d
 --- a/bootable/bootloader/lk/target/msm8909/init.c
 +++ b/bootable/bootloader/lk/target/msm8909/init.c
-@@ -492,30 +492,6 @@ uint8_t target_panel_auto_detect_enabled()
+@@ -492,6 +492,30 @@ uint8_t target_panel_auto_detect_enabled()
  	return ret;
  }
  
--uint8_t target_is_spi()
--{
--	uint32_t platform = board_platform_id();
--	uint32_t hw_id = board_hardware_id();
--	uint8_t is_spi_panel = 0;
--
--	switch(platform) {
--	case MSM8909:
--		switch (hw_id) {
--		case HW_PLATFORM_QRD:
--		case HW_PLATFORM_MTP:
--			is_spi_panel = 1;
--			break;
--		default:
--			is_spi_panel = 0;
--			break;
--		}
--		break;
--	default:
--		is_spi_panel = 0;
--		break;
--	}
--	return is_spi_panel;
--}
++uint8_t target_is_spi()
++{
++	uint32_t platform = board_platform_id();
++	uint32_t hw_id = board_hardware_id();
++	uint8_t is_spi_panel = 0;
++
++	switch(platform) {
++	case MSM8909:
++		switch (hw_id) {
++		case HW_PLATFORM_QRD:
++		case HW_PLATFORM_MTP:
++			is_spi_panel = 1;
++			break;
++		default:
++			is_spi_panel = 0;
++			break;
++		}
++		break;
++	default:
++		is_spi_panel = 0;
++		break;
++	}
++	return is_spi_panel;
++}
  static uint8_t splash_override;
  /* Returns 1 if target supports continuous splash screen. */
  int target_cont_splash_screen()
-@@ -785,10 +761,6 @@ uint32_t target_get_hlos_subtype()
+@@ -761,6 +785,10 @@ uint32_t target_get_hlos_subtype()
  	return board_hlos_subtype();
  }
  
--
--
--
--
++
++
++
++
  void pmic_reset_configure(uint8_t reset_type)
  {
  	pm8x41_reset_configure(reset_type);
 diff --git a/bootable/bootloader/lk/target/msm8909/oem_panel.c b/bootable/bootloader/lk/target/msm8909/oem_panel.c
-old mode 100755
-new mode 100644
-index f2148bd..bab6eee
+old mode 100644
+new mode 100755
+index bab6eee..f2148bd
 --- a/bootable/bootloader/lk/target/msm8909/oem_panel.c
 +++ b/bootable/bootloader/lk/target/msm8909/oem_panel.c
-@@ -49,7 +49,6 @@
+@@ -49,6 +49,7 @@
  #include "include/panel_auo_qvga_cmd.h"
  #include "include/panel_auo_cx_qvga_cmd.h"
  #include "include/panel_hx8394f_720p_video.h"
--#include "include/panel_st7789v_qvga_spi_cmd.h"
++#include "include/panel_st7789v_qvga_spi_cmd.h"
  
  #define DISPLAY_MAX_PANEL_DETECTION 0
  #define ILI9806E_FWVGA_VIDEO_PANEL_POST_INIT_DELAY 68
-@@ -86,7 +85,6 @@ enum {
+@@ -85,6 +86,7 @@ enum {
  	AUO_QVGA_CMD_PANEL,
  	AUO_CX_QVGA_CMD_PANEL,
  	HX8394F_720P_VIDEO_PANEL,
--	ST7789V_QVGA_SPI_CMD_PANEL,
++	ST7789V_QVGA_SPI_CMD_PANEL,
  	UNKNOWN_PANEL
  };
  
-@@ -107,7 +105,6 @@ static struct panel_list supp_panels[] = {
+@@ -105,6 +107,7 @@ static struct panel_list supp_panels[] = {
  	{"auo_qvga_cmd", AUO_QVGA_CMD_PANEL},
  	{"auo_cx_qvga_cmd", AUO_CX_QVGA_CMD_PANEL},
  	{"hx8394f_720p_video", HX8394F_720P_VIDEO_PANEL},
--	{"st7789v_qvga_cmd", ST7789V_QVGA_SPI_CMD_PANEL},
++	{"st7789v_qvga_cmd", ST7789V_QVGA_SPI_CMD_PANEL},
  };
  
  static uint32_t panel_id;
-@@ -187,7 +184,7 @@ static int init_panel_data(struct panel_struct *panelstruct,
+@@ -184,7 +187,7 @@ static int init_panel_data(struct panel_struct *panelstruct,
  				hx8394d_720p_video_timings, TIMING_SIZE);
  		pinfo->mipi.signature = HX8394D_720P_VIDEO_SIGNATURE;
  		break;
--    case SHARP_QHD_VIDEO_PANEL:
-+        case SHARP_QHD_VIDEO_PANEL:
+-        case SHARP_QHD_VIDEO_PANEL:
++    case SHARP_QHD_VIDEO_PANEL:
  		panelstruct->paneldata    = &sharp_qhd_video_panel_data;
  		panelstruct->panelres     = &sharp_qhd_video_panel_res;
  		panelstruct->color        = &sharp_qhd_video_color;
-@@ -393,19 +390,6 @@ static int init_panel_data(struct panel_struct *panelstruct,
+@@ -390,6 +393,19 @@ static int init_panel_data(struct panel_struct *panelstruct,
  					hx8394f_720p_video_timings, TIMING_SIZE);
  		pinfo->mipi.signature = HX8394F_720P_VIDEO_SIGNATURE;
  		break;
--	case ST7789V_QVGA_SPI_CMD_PANEL:
--		panelstruct->paneldata    = &st7789v_qvga_cmd_panel_data;
--		panelstruct->panelres     = &st7789v_qvga_cmd_panel_res;
--		panelstruct->color        = &st7789v_qvga_cmd_color;
--		panelstruct->panelresetseq
--					= &st7789v_qvga_cmd_reset_seq;
--		panelstruct->backlightinfo = &st7789v_qvga_cmd_backlight;
--		pinfo->spi.panel_cmds
--					= st7789v_qvga_cmd_on_command;
--		pinfo->spi.num_of_panel_cmds
--					= ST7789V_QVGA_CMD_ON_COMMAND;
--		pan_type = PANEL_TYPE_SPI;		//directly select spi
--		break;
++	case ST7789V_QVGA_SPI_CMD_PANEL:
++		panelstruct->paneldata    = &st7789v_qvga_cmd_panel_data;
++		panelstruct->panelres     = &st7789v_qvga_cmd_panel_res;
++		panelstruct->color        = &st7789v_qvga_cmd_color;
++		panelstruct->panelresetseq
++					= &st7789v_qvga_cmd_reset_seq;
++		panelstruct->backlightinfo = &st7789v_qvga_cmd_backlight;
++		pinfo->spi.panel_cmds
++					= st7789v_qvga_cmd_on_command;
++		pinfo->spi.num_of_panel_cmds
++					= ST7789V_QVGA_CMD_ON_COMMAND;
++		pan_type = PANEL_TYPE_SPI;		//directly select spi
++		break;
  	case UNKNOWN_PANEL:
  	default:
  		memset(panelstruct, 0, sizeof(struct panel_struct));
-@@ -429,7 +413,7 @@ int oem_panel_select(const char *panel_name, struct panel_struct *panelstruct,
+@@ -413,7 +429,7 @@ int oem_panel_select(const char *panel_name, struct panel_struct *panelstruct,
  			struct mdss_dsi_phy_ctrl *phy_db)
  {
  	uint32_t hw_id = board_hardware_id();
--	uint32_t platform_type = board_platform_id();		//qcom board platform
-+	uint32_t platform_type = board_platform_id();
+-	uint32_t platform_type = board_platform_id();
++	uint32_t platform_type = board_platform_id();		//qcom board platform
  	uint32_t platform_subtype = board_hardware_subtype();
  	int32_t panel_override_id;
  	uint32_t target_id = 0, plat_hw_ver_major = 0;
-@@ -472,8 +456,10 @@ int oem_panel_select(const char *panel_name, struct panel_struct *panelstruct,
+@@ -456,10 +472,8 @@ int oem_panel_select(const char *panel_name, struct panel_struct *panelstruct,
  	case HW_PLATFORM_QRD:
  		switch (platform_subtype) {
  			case QRD_SKUA:
--				if (MSM8909 == platform_type)
--					panel_id = ST7789V_QVGA_SPI_CMD_PANEL;
-+				target_id = board_target_id();
-+				plat_hw_ver_major = ((target_id >> 16) & 0xFF);
-+				if (plat_hw_ver_major == 6)
-+					panel_id = HX8394F_720P_VIDEO_PANEL;
+-				target_id = board_target_id();
+-				plat_hw_ver_major = ((target_id >> 16) & 0xFF);
+-				if (plat_hw_ver_major == 6)
+-					panel_id = HX8394F_720P_VIDEO_PANEL;
++				if (MSM8909 == platform_type)
++					panel_id = ST7789V_QVGA_SPI_CMD_PANEL;
  				else
  					panel_id = HX8379A_FWVGA_SKUA_VIDEO_PANEL;
  				break;
 diff --git a/bootable/bootloader/lk/target/msm8909/regulator.c b/bootable/bootloader/lk/target/msm8909/regulator.c
-old mode 100755
-new mode 100644
-index 13ecaac..e421b42
+old mode 100644
+new mode 100755
+index e421b42..13ecaac
 --- a/bootable/bootloader/lk/target/msm8909/regulator.c
 +++ b/bootable/bootloader/lk/target/msm8909/regulator.c
-@@ -92,14 +92,3 @@ void regulator_enable()
+@@ -92,3 +92,14 @@ void regulator_enable()
  	rpm_send_data(&ldo6[GENERIC_ENABLE][0], 36, RPM_REQUEST_TYPE);
  
  }
--
--
--
--
--void spi_panel_regulator_enable()
--{	
--	rpm_send_data(&ldo17[GENERIC_ENABLE][0], 36, RPM_REQUEST_TYPE);	
--	rpm_send_data(&ldo6[GENERIC_ENABLE][0], 36, RPM_REQUEST_TYPE);
--}
--
--
++
++
++
++
++void spi_panel_regulator_enable()
++{	
++	rpm_send_data(&ldo17[GENERIC_ENABLE][0], 36, RPM_REQUEST_TYPE);	
++	rpm_send_data(&ldo6[GENERIC_ENABLE][0], 36, RPM_REQUEST_TYPE);
++}
++
++
 diff --git a/bootable/bootloader/lk/target/msm8909/target_display.c b/bootable/bootloader/lk/target/msm8909/target_display.c
-old mode 100755
-new mode 100644
-index eaacbb1..dd01851
+old mode 100644
+new mode 100755
+index dd01851..eaacbb1
 --- a/bootable/bootloader/lk/target/msm8909/target_display.c
 +++ b/bootable/bootloader/lk/target/msm8909/target_display.c
-@@ -234,9 +234,6 @@ int target_backlight_ctrl(struct backlight *bl, uint8_t enable)
+@@ -234,6 +234,9 @@ int target_backlight_ctrl(struct backlight *bl, uint8_t enable)
  	return 0;
  }
  
--
--
--
++
++
++
  int target_panel_clock(uint8_t enable, struct msm_panel_info *pinfo)
  {
  	int32_t ret = 0;
-@@ -364,14 +361,11 @@ int target_panel_reset(uint8_t enable, struct panel_reset_sequence *resetseq,
+@@ -361,11 +364,14 @@ int target_panel_reset(uint8_t enable, struct panel_reset_sequence *resetseq,
  	return ret;
  }
  
--int target_ldo_ctrl(uint8_t enable, struct msm_panel_info *pinfo)
-+int target_ldo_ctrl(uint8_t enable)
+-int target_ldo_ctrl(uint8_t enable)
++int target_ldo_ctrl(uint8_t enable, struct msm_panel_info *pinfo)
  {
--	if (enable){
--		if (pinfo->type == SPI_PANEL)
--			spi_panel_regulator_enable();	 /* L6, and L17 */		
--		else			
--			regulator_enable();     /* L2, L6, and L17 */	
--	}	
-+	if (enable)
-+		regulator_enable();     /* L2, L6, and L17 */
-+
+-	if (enable)
+-		regulator_enable();     /* L2, L6, and L17 */
+-
++	if (enable){
++		if (pinfo->type == SPI_PANEL)
++			spi_panel_regulator_enable();	 /* L6, and L17 */		
++		else			
++			regulator_enable();     /* L2, L6, and L17 */	
++	}	
  	return NO_ERROR;
  }
  
-@@ -394,7 +388,6 @@ void target_display_init(const char *panel_name)
+@@ -388,6 +394,7 @@ void target_display_init(const char *panel_name)
  		return;
  	}
  
--
++
  	do {
  		target_force_cont_splash_disable(false);
  		ret = gcdb_display_init(panel_name, MDP_REV_305, MIPI_FB_ADDR);
