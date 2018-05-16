@@ -1,0 +1,57 @@
+diff --git a/kernel/arch/arm/boot/dts/qcom/spi-panel-st7789v-qvga-cmd.dtsi b/kernel/arch/arm/boot/dts/qcom/spi-panel-st7789v-qvga-cmd.dtsi
+index 060ee6d..3eddf74 100755
+--- a/kernel/arch/arm/boot/dts/qcom/spi-panel-st7789v-qvga-cmd.dtsi
++++ b/kernel/arch/arm/boot/dts/qcom/spi-panel-st7789v-qvga-cmd.dtsi
+@@ -56,5 +56,6 @@
+ 		qcom,mdss-spi-bl-max-level = <4095>;
+ 		qcom,mdss-spi-bl-pmic-control-type = "bl_ctrl_wled";
+ 		qcom,mdss-spi-reset-sequence = <1 20>, <0 120>, <1 20>;
++		qcom,cont-splash-enabled;
+ 	};
+ };
+diff --git a/kernel/drivers/video/msm/mdss/mdss_spi_panel.c b/kernel/drivers/video/msm/mdss/mdss_spi_panel.c
+index f2bbf7d..41ddd31 100755
+--- a/kernel/drivers/video/msm/mdss/mdss_spi_panel.c
++++ b/kernel/drivers/video/msm/mdss/mdss_spi_panel.c
+@@ -259,15 +259,16 @@ static int mdss_spi_panel_unblank(struct mdss_panel_data *pdata)
+ 	ctrl_pdata = container_of(pdata, struct spi_panel_data,
+ 				panel_data);
+ 
+-	if (!(ctrl_pdata->ctrl_state & CTRL_STATE_PANEL_INIT)) {
+-			ret = ctrl_pdata->on(pdata);
+-			if (ret) {
+-				pr_err("%s: unable to initialize the panel\n",
+-							__func__);
+-				return ret;
+-		}
+-		ctrl_pdata->ctrl_state |= CTRL_STATE_PANEL_INIT;
++//	if (!(ctrl_pdata->ctrl_state & CTRL_STATE_PANEL_INIT)) {
++
++	ret = ctrl_pdata->on(pdata);
++	if (ret) {
++		pr_err("%s: unable to initialize the panel\n",
++					__func__);
++		return ret;
+ 	}
++	ctrl_pdata->ctrl_state |= CTRL_STATE_PANEL_INIT;
++//	}
+ 
+ 	return ret;
+ }
+@@ -988,7 +989,7 @@ int mdss_spi_panel_init(struct device_node *node,
+ 	int rc = 0;
+ 	static const char *panel_name;
+ 	struct mdss_panel_info *pinfo;
+-
++	
+ 	if (!node || !ctrl_pdata) {
+ 		pr_err("%s: Invalid arguments\n", __func__);
+ 		return -ENODEV;
+@@ -1036,6 +1037,7 @@ int mdss_spi_panel_init(struct device_node *node,
+ 	ctrl_pdata->off = mdss_spi_panel_off;
+ 	ctrl_pdata->panel_data.set_backlight = mdss_spi_panel_bl_ctrl;
+ 
++
+ 	return 0;
+ }
+ 
