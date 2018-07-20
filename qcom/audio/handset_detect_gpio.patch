@@ -1,0 +1,334 @@
+diff --git a/kernel/arch/arm/boot/dts/qcom/msm8916-pinctrl.dtsi b/kernel/arch/arm/boot/dts/qcom/msm8916-pinctrl.dtsi
+index b12f8db..f5b2c7f 100644
+--- a/kernel/arch/arm/boot/dts/qcom/msm8916-pinctrl.dtsi
++++ b/kernel/arch/arm/boot/dts/qcom/msm8916-pinctrl.dtsi
+@@ -1186,9 +1186,9 @@
+ 		};
+ 
+ 		tlmm_gpio_key {
+-			qcom,pins = <&gp 112>, <&gp 11>;
++			qcom,pins = <&gp 112>, <&gp 11> ,<&gp 38>;
+ 			qcom,pin-func = <0>;
+-			qcom,num-grp-pins = <2>;
++			qcom,num-grp-pins = <3>;
+ 			label = "tlmm_gpio_key";
+ 			gpio_key_active: gpio_key_active {
+ 				drive-strength = <2>;
+diff --git a/kernel/arch/arm/boot/dts/qcom/msm8916-qrd-skui.dtsi b/kernel/arch/arm/boot/dts/qcom/msm8916-qrd-skui.dtsi
+index 0106038..ec5aa99 100755
+--- a/kernel/arch/arm/boot/dts/qcom/msm8916-qrd-skui.dtsi
++++ b/kernel/arch/arm/boot/dts/qcom/msm8916-qrd-skui.dtsi
+@@ -90,6 +90,7 @@
+ 				"msm-dai-q6-dev.240", "msm-dai-q6-dev.32771",
+ 				"msm-dai-q6-dev.32772", "msm-dai-q6-dev.32773",
+ 				"msm-dai-q6-dev.32770";
++		asoc-handset_detect = <&msm_gpio 38 0x00>;
+ 		asoc-codec = <&stub_codec>, <&pm8916_tombak_dig>;
+ 		asoc-codec-names = "msm-stub-codec.1", "tombak_codec";
+ 	};
+diff --git a/kernel/arch/arm/boot/dts/qcom/msm8916-qrd.dtsi b/kernel/arch/arm/boot/dts/qcom/msm8916-qrd.dtsi
+index 38b711e..604c34e 100644
+--- a/kernel/arch/arm/boot/dts/qcom/msm8916-qrd.dtsi
++++ b/kernel/arch/arm/boot/dts/qcom/msm8916-qrd.dtsi
+@@ -142,8 +142,8 @@
+ 	qcom,vdd-io-current-level = <200 50000>;
+ 
+ 	pinctrl-names = "active", "sleep";
+-	pinctrl-0 = <&sdc2_clk_on &sdc2_cmd_on &sdc2_data_on &sdc2_cd_on>;
+-	pinctrl-1 = <&sdc2_clk_off &sdc2_cmd_off &sdc2_data_off &sdc2_cd_off>;
++	pinctrl-0 = <&sdc2_clk_on &sdc2_cmd_on &sdc2_data_on>;
++	pinctrl-1 = <&sdc2_clk_off &sdc2_cmd_off &sdc2_data_off>;
+ 
+ 	#address-cells = <0>;
+ 	interrupt-parent = <&sdhc_2>;
+@@ -151,10 +151,8 @@
+ 	#interrupt-cells = <1>;
+ 	interrupt-map-mask = <0xffffffff>;
+ 	interrupt-map = <0 &intc 0 125 0
+-			1 &intc 0 221 0
+-			2 &msm_gpio 38 0>;
+-	interrupt-names = "hc_irq", "pwr_irq", "status_irq";
+-	cd-gpios = <&msm_gpio 38 0x0>;
++			1 &intc 0 221 0>;
++	interrupt-names = "hc_irq", "pwr_irq";
+ 
+ 	status = "ok";
+ };
+diff --git a/kernel/sound/soc/codecs/wcd-mbhc-v2.c b/kernel/sound/soc/codecs/wcd-mbhc-v2.c
+old mode 100644
+new mode 100755
+index 13d62d1..d3de8f1
+--- a/kernel/sound/soc/codecs/wcd-mbhc-v2.c
++++ b/kernel/sound/soc/codecs/wcd-mbhc-v2.c
+@@ -28,6 +28,7 @@
+ #include <glink_private.h>
+ #include <sound/soc.h>
+ #include <sound/jack.h>
++#include <linux/of_irq.h>
+ #include "wcd-mbhc-v2.h"
+ #include "wcdcal-hwdep.h"
+ 
+@@ -64,6 +65,8 @@ enum wcd_mbhc_cs_mb_en_flag {
+ 	WCD_MBHC_EN_NONE,
+ };
+ 
++
++static bool is_first_detect_flag = 0;
+ static void wcd_mbhc_jack_report(struct wcd_mbhc *mbhc,
+ 				struct snd_soc_jack *jack, int status, int mask)
+ {
+@@ -407,8 +410,8 @@ static int wcd_cancel_btn_work(struct wcd_mbhc *mbhc)
+ 	 * if scheduled mbhc.mbhc_btn_dwork is canceled from here,
+ 	 * we have to unlock from here instead btn_work
+ 	 */
+-	if (r)
+-		mbhc->mbhc_cb->lock_sleep(mbhc, false);
++//	if (r)
++//		mbhc->mbhc_cb->lock_sleep(mbhc, false);
+ 	return r;
+ }
+ 
+@@ -425,7 +428,7 @@ static void wcd_schedule_hs_detect_plug(struct wcd_mbhc *mbhc,
+ 					    struct work_struct *work)
+ {
+ 	pr_debug("%s: scheduling correct_swch_plug\n", __func__);
+-	WCD_MBHC_RSC_ASSERT_LOCKED(mbhc);
++//	WCD_MBHC_RSC_ASSERT_LOCKED(mbhc);
+ 	mbhc->hs_detect_work_stop = false;
+ 	mbhc->mbhc_cb->lock_sleep(mbhc, true);
+ 	schedule_work(work);
+@@ -437,13 +440,13 @@ static void wcd_cancel_hs_detect_plug(struct wcd_mbhc *mbhc,
+ {
+ 	pr_debug("%s: Canceling correct_plug_swch\n", __func__);
+ 	mbhc->hs_detect_work_stop = true;
+-	WCD_MBHC_RSC_UNLOCK(mbhc);
++//	WCD_MBHC_RSC_UNLOCK(mbhc);
+ 	if (cancel_work_sync(work)) {
+ 		pr_debug("%s: correct_plug_swch is canceled\n",
+ 			 __func__);
+-		mbhc->mbhc_cb->lock_sleep(mbhc, false);
++//		mbhc->mbhc_cb->lock_sleep(mbhc, false);
+ 	}
+-	WCD_MBHC_RSC_LOCK(mbhc);
++//	WCD_MBHC_RSC_LOCK(mbhc);
+ }
+ 
+ static void wcd_mbhc_clr_and_turnon_hph_padac(struct wcd_mbhc *mbhc)
+@@ -994,12 +997,15 @@ static void wcd_correct_swch_plug(struct work_struct *work)
+ 
+ 	if (!rc) {
+ 		pr_debug("%s No btn press interrupt\n", __func__);
+-		if (!btn_result && !hs_comp_res)
+-			plug_type = MBHC_PLUG_TYPE_HEADSET;
+-		else if (!btn_result && hs_comp_res)
+-			plug_type = MBHC_PLUG_TYPE_HIGH_HPH;
+-		else
+-			plug_type = MBHC_PLUG_TYPE_INVALID;
++		if (!btn_result && !hs_comp_res) {
++ 			plug_type = MBHC_PLUG_TYPE_HEADSET;
++		}
++		else if (!btn_result && hs_comp_res) {
++ 			plug_type = MBHC_PLUG_TYPE_HIGH_HPH;
++		}
++		else {
++ 			plug_type = MBHC_PLUG_TYPE_INVALID;
++		}
+ 	} else {
+ 		if (!btn_result && !hs_comp_res)
+ 			plug_type = MBHC_PLUG_TYPE_HEADPHONE;
+@@ -1253,15 +1259,29 @@ static void wcd_mbhc_detect_plug_type(struct wcd_mbhc *mbhc)
+ 	pr_debug("%s: leave\n", __func__);
+ }
+ 
+-static void wcd_mbhc_swch_irq_handler(struct wcd_mbhc *mbhc)
++static void wcd_mbhc_swch_irq_handler(struct work_struct *work)
+ {
+ 	bool detection_type;
+ 	bool micbias1 = false;
++
++	struct wcd_mbhc *mbhc = container_of(work, struct wcd_mbhc, detect_work);
+ 	struct snd_soc_codec *codec = mbhc->codec;
+ 
+ 	dev_dbg(codec->dev, "%s: enter\n", __func__);
+ 
+-	WCD_MBHC_RSC_LOCK(mbhc);
++//	WCD_MBHC_RSC_LOCK(mbhc);
++	//get detect the init value, only execute once time
++	if(is_first_detect_flag == 0) {
++		if(gpio_get_value(mbhc->handset_detect_gpio)) {
++			pr_debug("handset_detect_gpio insert out first time\n");
++			enable_irq(mbhc->handset_detect_irq);
++			return;
++		} else {
++			pr_debug("handset_detect_gpio is first insert\n");
++		}
++		is_first_detect_flag++;
++	}
++
+ 
+ 	mbhc->in_swch_irq_handler = true;
+ 
+@@ -1290,6 +1310,9 @@ static void wcd_mbhc_swch_irq_handler(struct wcd_mbhc *mbhc)
+ 		micbias1 = mbhc->mbhc_cb->micbias_enable_status(mbhc,
+ 						MIC_BIAS_1);
+ 
++
++	
++
+ 	if ((mbhc->current_plug == MBHC_PLUG_TYPE_NONE) &&
+ 	    detection_type) {
+ 		/* Make sure MASTER_BIAS_CTL is enabled */
+@@ -1317,7 +1340,8 @@ static void wcd_mbhc_swch_irq_handler(struct wcd_mbhc *mbhc)
+ 			mbhc->mbhc_cb->enable_mb_source(codec, true);
+ 		mbhc->btn_press_intr = false;
+ 		wcd_mbhc_detect_plug_type(mbhc);
+-	} else if ((mbhc->current_plug != MBHC_PLUG_TYPE_NONE)
++	} 
++	else if ((mbhc->current_plug != MBHC_PLUG_TYPE_NONE)
+ 			&& !detection_type) {
+ 		/* Disable external voltage source to micbias if present */
+ 		if (mbhc->mbhc_cb->enable_mb_source)
+@@ -1376,8 +1400,10 @@ static void wcd_mbhc_swch_irq_handler(struct wcd_mbhc *mbhc)
+ 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_BTN_ISRC_CTL, 0);
+ 	}
+ 
++	enable_irq(mbhc->handset_detect_irq);
++
+ 	mbhc->in_swch_irq_handler = false;
+-	WCD_MBHC_RSC_UNLOCK(mbhc);
++//	WCD_MBHC_RSC_UNLOCK(mbhc);
+ 	pr_debug("%s: leave\n", __func__);
+ }
+ 
+@@ -1385,20 +1411,26 @@ static irqreturn_t wcd_mbhc_mech_plug_detect_irq(int irq, void *data)
+ {
+ 	int r = IRQ_HANDLED;
+ 	struct wcd_mbhc *mbhc = data;
+-
++	
++	disable_irq_nosync(mbhc->handset_detect_irq);
++	
+ 	pr_debug("%s: enter\n", __func__);
++	
++	/*
+ 	if (unlikely((mbhc->mbhc_cb->lock_sleep(mbhc, true)) == false)) {
+ 		pr_warn("%s: failed to hold suspend\n", __func__);
+ 		r = IRQ_NONE;
+ 	} else {
+-		/* Call handler */
++		// Call handler 
+ 		wcd_mbhc_swch_irq_handler(mbhc);
+ 		mbhc->mbhc_cb->lock_sleep(mbhc, false);
+ 	}
++	*/
++
++	schedule_work(&mbhc->detect_work);
+ 	pr_debug("%s: leave %d\n", __func__, r);
+ 	return r;
+ }
+-
+ static int wcd_mbhc_get_button_mask(struct wcd_mbhc *mbhc)
+ {
+ 	int mask = 0;
+@@ -1438,6 +1470,8 @@ static int wcd_mbhc_get_button_mask(struct wcd_mbhc *mbhc)
+ 	return mask;
+ }
+ 
++
++#if 1
+ static irqreturn_t wcd_mbhc_hs_ins_irq(int irq, void *data)
+ {
+ 	struct wcd_mbhc *mbhc = data;
+@@ -1520,6 +1554,7 @@ determine_plug:
+ 	pr_debug("%s: leave\n", __func__);
+ 	return IRQ_HANDLED;
+ }
++#endif
+ 
+ static irqreturn_t wcd_mbhc_hs_rem_irq(int irq, void *data)
+ {
+@@ -2116,6 +2151,29 @@ int wcd_mbhc_init(struct wcd_mbhc *mbhc, struct snd_soc_codec *codec,
+ 
+ 	pr_debug("%s: enter\n", __func__);
+ 
++	mbhc->handset_detect_gpio= of_get_named_gpio(card->dev->of_node, "asoc-handset_detect", 0);
++	pr_debug("%s irq gpio = %d\n", __func__, mbhc->handset_detect_gpio);
++	if (gpio_is_valid(mbhc->handset_detect_gpio))
++	{
++
++		gpio_request_one(mbhc->handset_detect_gpio, GPIOF_IN, "handset_detect_irq");
++		
++		
++		mbhc->handset_detect_irq= gpio_to_irq(mbhc->handset_detect_gpio);
++		
++		if (mbhc->handset_detect_irq < 0) {
++			ret = mbhc->handset_detect_irq;
++			goto err_irq_num_failed;
++		} else {
++			pr_debug("mbhc->irq is %d\n", mbhc->handset_detect_irq);
++		}
++		
++	} else {
++		pr_debug("null irq node!!\n");
++		return -EINVAL;
++	}	
++		
++
+ 	ret = of_property_read_u32(card->dev->of_node, hph_switch, &hph_swh);
+ 	if (ret) {
+ 		dev_err(card->dev,
+@@ -2216,15 +2274,24 @@ int wcd_mbhc_init(struct wcd_mbhc *mbhc, struct snd_soc_codec *codec,
+ 	init_waitqueue_head(&mbhc->wait_btn_press);
+ 	mutex_init(&mbhc->codec_resource_lock);
+ 
+-	ret = mbhc->mbhc_cb->request_irq(codec, mbhc->intr_ids->mbhc_sw_intr,
++/*	ret = mbhc->mbhc_cb->request_irq(codec, mbhc->intr_ids->mbhc_sw_intr,
+ 				  wcd_mbhc_mech_plug_detect_irq,
+ 				  "mbhc sw intr", mbhc);
++				  */
++	INIT_WORK(&mbhc->detect_work, wcd_mbhc_swch_irq_handler);
++
++  	ret = request_irq(mbhc->handset_detect_irq, wcd_mbhc_mech_plug_detect_irq,
++ 		IRQ_TYPE_EDGE_FALLING | IRQ_TYPE_EDGE_RISING,
++  		"mbhc-irq", mbhc);
+ 	if (ret) {
+ 		pr_err("%s: Failed to request irq %d, ret = %d\n", __func__,
+-		       mbhc->intr_ids->mbhc_sw_intr, ret);
++		       mbhc->handset_detect_irq, ret);
+ 		goto err_mbhc_sw_irq;
+ 	}
+ 
++	
++	
++
+ 	ret = mbhc->mbhc_cb->request_irq(codec,
+ 					 mbhc->intr_ids->mbhc_btn_press_intr,
+ 					 wcd_mbhc_btn_press_handler,
+@@ -2309,6 +2376,8 @@ err_mbhc_sw_irq:
+ 	if (mbhc->mbhc_cb->register_notifier)
+ 		mbhc->mbhc_cb->register_notifier(codec, &mbhc->nblock, false);
+ 	mutex_destroy(&mbhc->codec_resource_lock);
++err_irq_num_failed:
++	gpio_free(mbhc->handset_detect_gpio);
+ err:
+ 	pr_debug("%s: leave ret %d\n", __func__, ret);
+ 	return ret;
+diff --git a/kernel/sound/soc/codecs/wcd-mbhc-v2.h b/kernel/sound/soc/codecs/wcd-mbhc-v2.h
+old mode 100644
+new mode 100755
+index 500e474..38e6803
+--- a/kernel/sound/soc/codecs/wcd-mbhc-v2.h
++++ b/kernel/sound/soc/codecs/wcd-mbhc-v2.h
+@@ -414,6 +414,12 @@ struct wcd_mbhc {
+ 	struct completion btn_press_compl;
+ 	struct mutex hphl_pa_lock;
+ 	struct mutex hphr_pa_lock;
++
++	//added by linhao
++	int handset_detect_gpio;
++	int handset_detect_irq;
++	struct work_struct detect_work;
++	
+ };
+ #define WCD_MBHC_CAL_SIZE(buttons, rload) ( \
+ 	sizeof(struct wcd_mbhc_general_cfg) + \
