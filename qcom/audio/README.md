@@ -80,3 +80,9 @@ int wcd9xxx_spmi_request_irq(int irq, irq_handler_t handler,
 由上可以看到原来的耳机中断都是通过`spmi_get_irq_byname`默认设置好的。
 
 所以我们申请的中断要去掉所有的互斥锁；
+
+## 中断申请需要注意的：
+我们需要`disable_irq_sync`和`enable_irq`函数相互协助，因为在插拔的时候可能多次引起中断进入；
+
+## 在耳机第一次插入时，kernel还没正常初始化audio handset
+这就会导致耳机拔出的时候，误认为是插入的状态，所以使用标志位判断；
