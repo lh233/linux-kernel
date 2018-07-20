@@ -1,0 +1,258 @@
+diff --git a/device/qcom/common/init/init_msm8909.c b/device/qcom/common/init/init_msm8909.c
+old mode 100644
+new mode 100755
+index 730ef0f..62ef435
+--- a/device/qcom/common/init/init_msm8909.c
++++ b/device/qcom/common/init/init_msm8909.c
+@@ -68,6 +68,9 @@ void init_msm_properties(unsigned long msm_id, unsigned long msm_ver, char *boar
+     } else if (virtual_size >= 480) {
+         // For 480x854 resolution QRD.
+         property_set(PROP_LCDDENSITY, "240");
++    } else if (virtual_size >= 240) {
++        // For 240x320 resolution QRD.
++        property_set(PROP_LCDDENSITY, "160");
+     } else
+         property_set(PROP_LCDDENSITY, "320");
+ 
+diff --git a/device/qcom/common/rootdir/etc/init.qcom.early_boot.sh b/device/qcom/common/rootdir/etc/init.qcom.early_boot.sh
+index f8b0165..416c4bd 100755
+--- a/device/qcom/common/rootdir/etc/init.qcom.early_boot.sh
++++ b/device/qcom/common/rootdir/etc/init.qcom.early_boot.sh
+@@ -188,6 +188,9 @@ case "$platform" in
+             elif [ $virtual_size -ge "480" ]
+             then
+                 setprop ro.sf.lcd_density 240
++	    elif [ $virtual_size -ge "240" ]
++            then
++                setprop ro.sf.lcd_density 160
+             else
+                 setprop ro.sf.lcd_density 320
+             fi
+diff --git a/device/qcom/msm8909/BoardConfig.mk b/device/qcom/msm8909/BoardConfig.mk
+index 5c0a2e2..024c8cc 100755
+--- a/device/qcom/msm8909/BoardConfig.mk
++++ b/device/qcom/msm8909/BoardConfig.mk
+@@ -47,7 +47,8 @@ TARGET_NO_BOOTLOADER := false
+ TARGET_NO_KERNEL := false
+ TARGET_NO_RADIOIMAGE := true
+ TARGET_NO_RPC := true
+-GET_FRAMEBUFFER_FORMAT_FROM_HWC := false
++GET_FRAMEBUFFER_FORMAT_FROM_HWC := true
++TARGET_USES_16BPPSURFACE_FOR_OPAQUE := true
+ 
+ BOOTLOADER_GCC_VERSION := arm-eabi-4.8
+ BOOTLOADER_PLATFORM := msm8909# use msm8952 LK configuration
+diff --git a/device/qcom/msm8909/system.prop b/device/qcom/msm8909/system.prop
+index ce88a9b..6efccb5 100644
+--- a/device/qcom/msm8909/system.prop
++++ b/device/qcom/msm8909/system.prop
+@@ -39,6 +39,7 @@ debug.sf.hwc.canUseABC=1
+ #enable gpu perf hint
+ sys.hwc.gpu_perf_mode=1
+ #ro.hdmi.enable=true
++ro.staticwallpaper.pixelformat=RGB_565
+ #tunnel.decode=true
+ #tunnel.audiovideo.decode=true
+ #lpa.decode=false
+diff --git a/device/qcom/msm8909_512/system.prop b/device/qcom/msm8909_512/system.prop
+old mode 100644
+new mode 100755
+index 2c5f354..1f54c6e
+--- a/device/qcom/msm8909_512/system.prop
++++ b/device/qcom/msm8909_512/system.prop
+@@ -34,6 +34,8 @@ debug.sf.swaprect=1
+ #enable app buffer composition
+ debug.sf.hwc.canUseABC=1
+ 
++ro.staticwallpaper.pixelformat=RGB_565
++
+ # system props for widevine
+ persist.gralloc.cp.level3=1
+ 
+diff --git a/frameworks/base/packages/SystemUI/src/com/android/systemui/ImageWallpaper.java b/frameworks/base/packages/SystemUI/src/com/android/systemui/ImageWallpaper.java
+old mode 100644
+new mode 100755
+index f76a68c..9940b27
+--- a/frameworks/base/packages/SystemUI/src/com/android/systemui/ImageWallpaper.java
++++ b/frameworks/base/packages/SystemUI/src/com/android/systemui/ImageWallpaper.java
+@@ -26,6 +26,7 @@ import android.content.ComponentCallbacks2;
+ import android.graphics.Bitmap;
+ import android.graphics.Canvas;
+ import android.graphics.Rect;
++import android.graphics.PixelFormat;
+ import android.graphics.RectF;
+ import android.graphics.Region.Op;
+ import android.opengl.GLUtils;
+@@ -189,6 +190,14 @@ public class ImageWallpaper extends WallpaperService {
+ 
+             super.onCreate(surfaceHolder);
+ 
++			// By defalut WallpaperService.java setting the Pixelformat type
++           // to RGBX_8888, overridding that Pixel format to RGB_565 for
++           // static wallpapers on 7x27a devices.
++           String sl = SystemProperties.get("ro.staticwallpaper.pixelformat");
++           if (sl != null && sl.equals("RGB_565")){
++               surfaceHolder.setFormat(PixelFormat.RGB_565);
++           }
++
+             mDefaultDisplay = getSystemService(WindowManager.class).getDefaultDisplay();
+             setOffsetNotificationsEnabled(false);
+ 
+diff --git a/frameworks/native/services/surfaceflinger/Android.mk b/frameworks/native/services/surfaceflinger/Android.mk
+old mode 100644
+new mode 100755
+index df46292..c7f56f4
+--- a/frameworks/native/services/surfaceflinger/Android.mk
++++ b/frameworks/native/services/surfaceflinger/Android.mk
+@@ -165,6 +165,12 @@ ifeq ($(TARGET_USES_QCOM_BSP), true)
+   ifeq ($(call is-board-platform-in-list, msm8996), true)
+     LOCAL_CFLAGS += -DUSE_COLOR_METADATA
+   endif
++  ifeq ($(GET_FRAMEBUFFER_FORMAT_FROM_HWC),true)
++    LOCAL_CFLAGS += -DGET_FRAMEBUFFER_FORMAT_FROM_HWC
++  endif
++  ifeq ($(TARGET_USES_16BPPSURFACE_FOR_OPAQUE),true)
++    LOCAL_CFLAGS += -DUSE_16BPPSURFACE_FOR_OPAQUE
++  endif
+ endif
+ 
+ LOCAL_MODULE := libsurfaceflinger
+diff --git a/frameworks/native/services/surfaceflinger/DisplayHardware/HWComposer.cpp b/frameworks/native/services/surfaceflinger/DisplayHardware/HWComposer.cpp
+old mode 100644
+new mode 100755
+diff --git a/frameworks/native/services/surfaceflinger/DisplayHardware/HWComposer_hwc1.cpp b/frameworks/native/services/surfaceflinger/DisplayHardware/HWComposer_hwc1.cpp
+old mode 100644
+new mode 100755
+index 16035d3..00d0418
+--- a/frameworks/native/services/surfaceflinger/DisplayHardware/HWComposer_hwc1.cpp
++++ b/frameworks/native/services/surfaceflinger/DisplayHardware/HWComposer_hwc1.cpp
+@@ -351,6 +351,9 @@ static const uint32_t DISPLAY_ATTRIBUTES[] = {
+     HWC_DISPLAY_HEIGHT,
+     HWC_DISPLAY_DPI_X,
+     HWC_DISPLAY_DPI_Y,
++#ifdef GET_FRAMEBUFFER_FORMAT_FROM_HWC
++    HWC_DISPLAY_FBFORMAT,
++#endif
+     HWC_DISPLAY_COLOR_TRANSFORM,
+     HWC_DISPLAY_NO_ATTRIBUTE,
+ };
+@@ -362,6 +365,9 @@ static const uint32_t PRE_HWC15_DISPLAY_ATTRIBUTES[] = {
+     HWC_DISPLAY_HEIGHT,
+     HWC_DISPLAY_DPI_X,
+     HWC_DISPLAY_DPI_Y,
++#ifdef GET_FRAMEBUFFER_FORMAT_FROM_HWC
++    HWC_DISPLAY_FBFORMAT,
++#endif
+     HWC_DISPLAY_NO_ATTRIBUTE,
+ };
+ 
+@@ -422,6 +428,11 @@ status_t HWComposer::queryDisplayProperties(int disp) {
+                 case HWC_DISPLAY_DPI_Y:
+                     config.ydpi = values[i] / 1000.0f;
+                     break;
++#ifdef GET_FRAMEBUFFER_FORMAT_FROM_HWC
++				case HWC_DISPLAY_FBFORMAT:
++            		mDisplayData[disp].format = values[i];
++            		break;
++#endif
+                 case HWC_DISPLAY_COLOR_TRANSFORM:
+                     config.colorMode = static_cast<android_color_mode_t>(values[i]);
+                     break;
+@@ -442,7 +453,9 @@ status_t HWComposer::queryDisplayProperties(int disp) {
+     }
+ 
+     // FIXME: what should we set the format to?
++#ifndef GET_FRAMEBUFFER_FORMAT_FROM_HWC
+     mDisplayData[disp].format = HAL_PIXEL_FORMAT_RGBA_8888;
++#endif
+     mDisplayData[disp].connected = true;
+     return NO_ERROR;
+ }
+@@ -889,7 +902,11 @@ int HWComposer::getVisualID() const {
+         // FIXME: temporary hack until HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED
+         // is supported by the implementation. we can only be in this case
+         // if we have HWC 1.1
++#ifdef GET_FRAMEBUFFER_FORMAT_FROM_HWC
++        return mDisplayData[HWC_DISPLAY_PRIMARY].format;
++#else
+         return HAL_PIXEL_FORMAT_RGBA_8888;
++#endif
+         //return HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED;
+     } else {
+         return mFbDev->format;
+diff --git a/frameworks/native/services/surfaceflinger/RenderEngine/RenderEngine.cpp b/frameworks/native/services/surfaceflinger/RenderEngine/RenderEngine.cpp
+old mode 100644
+new mode 100755
+index d6a032f..e7c25a2
+--- a/frameworks/native/services/surfaceflinger/RenderEngine/RenderEngine.cpp
++++ b/frameworks/native/services/surfaceflinger/RenderEngine/RenderEngine.cpp
+@@ -380,8 +380,13 @@ static status_t selectEGLConfig(EGLDisplay display, EGLint format,
+         attribs[EGL_RED_SIZE]                   = 8;
+         attribs[EGL_GREEN_SIZE]                 = 8;
+         attribs[EGL_BLUE_SIZE]                  = 8;
+-        wantedAttribute                         = EGL_NONE;
+-        wantedAttributeValue                    = EGL_NONE;
++        if (format != HAL_PIXEL_FORMAT_RGBA_8888) {
++            wantedAttribute                     = EGL_NATIVE_VISUAL_ID;
++            wantedAttributeValue                = format;
++        } else {
++            wantedAttribute                     = EGL_NONE;
++            wantedAttributeValue                = EGL_NONE;
++        }
+     } else {
+         // if no renderable type specified, fallback to a simplified query
+         wantedAttribute                         = EGL_NATIVE_VISUAL_ID;
+diff --git a/frameworks/native/services/surfaceflinger/SurfaceFlinger_hwc1.cpp b/frameworks/native/services/surfaceflinger/SurfaceFlinger_hwc1.cpp
+old mode 100644
+new mode 100755
+index 6b80362..a35fd18
+--- a/frameworks/native/services/surfaceflinger/SurfaceFlinger_hwc1.cpp
++++ b/frameworks/native/services/surfaceflinger/SurfaceFlinger_hwc1.cpp
+@@ -2538,7 +2538,11 @@ status_t SurfaceFlinger::createNormalLayer(const sp<Client>& client,
+         format = PIXEL_FORMAT_RGBA_8888;
+         break;
+     case PIXEL_FORMAT_OPAQUE:
++    #ifdef USE_16BPPSURFACE_FOR_OPAQUE
++        format = PIXEL_FORMAT_RGB_565;
++    #else
+         format = PIXEL_FORMAT_RGBX_8888;
++    #endif
+         break;
+     }
+ 
+diff --git a/hardware/libhardware/include/hardware/hwcomposer_defs.h b/hardware/libhardware/include/hardware/hwcomposer_defs.h
+old mode 100644
+new mode 100755
+index 095c627..e00ec64
+--- a/hardware/libhardware/include/hardware/hwcomposer_defs.h
++++ b/hardware/libhardware/include/hardware/hwcomposer_defs.h
+@@ -243,6 +243,7 @@ enum {
+     /* Indicates which of the vendor-defined color transforms is provided by
+      * this configuration. */
+     HWC_DISPLAY_COLOR_TRANSFORM             = 6,
++    HWC_DISPLAY_FBFORMAT	            = 7,
+ };
+ 
+ /* Allowed events for hwc_methods::eventControl() */
+diff --git a/hardware/qcom/display/libhwcomposer/Android.mk b/hardware/qcom/display/libhwcomposer/Android.mk
+old mode 100644
+new mode 100755
+diff --git a/hardware/qcom/display/libhwcomposer/hwc_fbupdate.cpp b/hardware/qcom/display/libhwcomposer/hwc_fbupdate.cpp
+old mode 100644
+new mode 100755
+diff --git a/hardware/qcom/display/libhwcomposer/hwc_utils.cpp b/hardware/qcom/display/libhwcomposer/hwc_utils.cpp
+old mode 100644
+new mode 100755
+index 2b9be2b..876d2da
+--- a/hardware/qcom/display/libhwcomposer/hwc_utils.cpp
++++ b/hardware/qcom/display/libhwcomposer/hwc_utils.cpp
+@@ -79,7 +79,8 @@ namespace qhwc {
+ // Std refresh rates for digital videos- 24p, 30p, 48p and 60p
+ uint32_t stdRefreshRates[] = { 30, 24, 48, 60 };
+ 
+-static uint32_t getFBformat(fb_var_screeninfo /*vinfo*/) {
++static uint32_t getFBformat(fb_var_screeninfo vinfo) {
++    (void) vinfo;
+     uint32_t fbformat = HAL_PIXEL_FORMAT_RGBA_8888;
+ 
+ #ifdef GET_FRAMEBUFFER_FORMAT_FROM_HWC

@@ -1,0 +1,18 @@
+diff --git a/kernel/msm-3.18/drivers/pwm/pwm-qpnp.c b/kernel/msm-3.18/drivers/pwm/pwm-qpnp.c
+old mode 100644
+new mode 100755
+index 3bfdcd8..45162f5
+--- a/kernel/msm-3.18/drivers/pwm/pwm-qpnp.c
++++ b/kernel/msm-3.18/drivers/pwm/pwm-qpnp.c
+@@ -1187,9 +1187,10 @@ static int qpnp_lpg_configure_pwm_state(struct qpnp_pwm_chip *chip,
+ 	 * Due to LPG hardware bug, in the PWM mode, having enabled PWM,
+ 	 * We have to write PWM values one more time.
+ 	 */
++	 /*
+ 	if (state == QPNP_PWM_ENABLE)
+ 		return qpnp_lpg_save_pwm_value(chip);
+-
++	*/
+ out:
+ 	return rc;
+ }
