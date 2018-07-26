@@ -86,3 +86,6 @@ int wcd9xxx_spmi_request_irq(int irq, irq_handler_t handler,
 
 ## 在耳机第一次插入时，kernel还没正常初始化audio handset
 这就会导致耳机拔出的时候，误认为是插入的状态，所以使用标志位判断；
+
+
+## 内核线程可以进入睡眠
