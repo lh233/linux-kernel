@@ -1,0 +1,80 @@
+diff --git a/hardware/qcom/sensors/Bmp180.cpp b/hardware/qcom/sensors/Bmp180.cpp
+old mode 100644
+new mode 100755
+index c48b7e8..ba4d571
+--- a/hardware/qcom/sensors/Bmp180.cpp
++++ b/hardware/qcom/sensors/Bmp180.cpp
+@@ -39,7 +39,7 @@
+ /*****************************************************************************/
+ 
+ PressureSensor::PressureSensor()
+-	: SensorBase(NULL, "bmp18x"),
++	: SensorBase(NULL, "bmp280"),
+ 	  mInputReader(4),
+ 	  mHasPendingEvent(false),
+ 	  mEnabledTime(0)
+@@ -81,7 +81,7 @@ PressureSensor::PressureSensor(struct SensorContext *context)
+ 
+ 
+ PressureSensor::PressureSensor(char *name)
+-	: SensorBase(NULL, "bmp18x"),
++	: SensorBase(NULL, "bmp280"),
+ 	  mInputReader(4),
+ 	  mHasPendingEvent(false),
+ 	  mEnabledTime(0)
+@@ -168,6 +168,7 @@ int PressureSensor::setDelay(int32_t, int64_t delay_ns)
+ 
+ int PressureSensor::readEvents(sensors_event_t* data, int count)
+ {
++	int i = 0;
+ 	if (count < 1)
+ 		return -EINVAL;
+ 
+@@ -178,7 +179,7 @@ int PressureSensor::readEvents(sensors_event_t* data, int count)
+ 		return mEnabled ? 1 : 0;
+ 	}
+ 
+-	if (mHasPendingMetadata) {
++	if (mHasPendingMetadata) {	
+ 		mHasPendingMetadata--;
+ 		meta_data.timestamp = getTimestamp();
+ 		*data = meta_data;
+@@ -200,6 +201,7 @@ again:
+ 		if (type == EV_ABS) {
+ 			float value = event->value;
+ 			mPendingEvent.pressure = value * CONVERT_PRESSURE;
++			ALOGI("the pressure is %f\n", mPendingEvent.pressure);
+ 		} else if (type == EV_SYN) {
+ 			switch (event->code) {
+ 				case SYN_TIME_SEC:
+@@ -215,8 +217,12 @@ again:
+ 						mPendingEvent.timestamp = timevalToNano(event->time);
+ 					}
+ 					if (mEnabled) {
+-						if (mPendingEvent.timestamp >= mEnabledTime) {
+-							*data++ = mPendingEvent;
++//						ALOGI("timestamp = %ld mEnabledTime = %ld mUseAbsTimeStamp = %d enable here\n", mPendingEvent.timestamp, mEnabledTime, mUseAbsTimeStamp);
++//						if (mPendingEvent.timestamp >= mEnabledTime)
++						{
++							*data = mPendingEvent;
++							ALOGI("data pressure is %f\n", data->pressure);
++//							data++;
+ 							numEventReceived++;
+ 						}
+ 						count--;
+@@ -227,6 +233,7 @@ again:
+ 			ALOGE("PressureSensor: unknown event (type=%d, code=%d)",
+ 					type, event->code);
+ 		}
++		
+ 		mInputReader.next();
+ 	}
+ 
+@@ -239,6 +246,7 @@ again:
+ 			goto again;
+ 	}
+ #endif
++	ALOGI("end the data the pressure is %f\n", mPendingEvent.pressure);
+ 
+ 	return numEventReceived;
+ }
