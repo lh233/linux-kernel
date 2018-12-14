@@ -1,0 +1,165 @@
+diff --git a/kernel/msm-3.18/arch/arm/boot/dts/qcom/msm8953-qrd-sku3.dtsi b/kernel/msm-3.18/arch/arm/boot/dts/qcom/msm8953-qrd-sku3.dtsi
+index 86fd21a..f93af2f 100755
+--- a/kernel/msm-3.18/arch/arm/boot/dts/qcom/msm8953-qrd-sku3.dtsi
++++ b/kernel/msm-3.18/arch/arm/boot/dts/qcom/msm8953-qrd-sku3.dtsi
+@@ -161,6 +161,77 @@
+ 
+ 
+ ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++&ext_codec {
++	status = "disabled";
++};
++
++&slim_msm {
++	status = "disabled";
++};
++
++&dai_slim {
++	status = "disabled";
++};
++
++&wcd9xxx_intc {
++	status = "disabled";
++};
++
++&clock_audio {
++	status = "disabled";
++};
++
++&wcd9335 {
++	status = "disabled";
++};
++
++&wcd_rst_gpio {
++	status = "disabled";
++};
++
++&int_codec {
++	status = "okay";
++	mic-det-gpio = <&tlmm 90 0x00>;
++	qcom,msm-mbhc-hphl-swh = <1>;
++	qcom,msm-mbhc-gnd-swh = <0>;
++	
++	qcom,audio-routing =
++		"RX_BIAS", "MCLK",
++		"SPK_RX_BIAS", "MCLK",
++		"INT_LDO_H", "MCLK",
++		"MIC BIAS Internal1", "Handset Mic",
++		"MIC BIAS External2", "Headset Mic",
++		"MIC BIAS External", "Secondary Mic",
++		"AMIC1", "MIC BIAS Internal1",
++		"AMIC2", "MIC BIAS External2",
++		"AMIC3", "MIC BIAS External",
++		"WSA_SPK OUT", "VDD_WSA_SWITCH",
++		"SpkrMono WSA_IN", "WSA_SPK OUT";
++};
++
++&pm8953_diangu_dig {
++	status = "okay";
++};
++
++&pm8953_diangu_analog {
++	status = "okay";
++};
++
++&wsa881x_i2c_e {
++	status = "okay";
++};
++
++&wsa881x_i2c_44 {
++	status = "okay";
++};
++
++&wsa881x_i2c_f {
++	status = "okay";
++};
++
++&wsa881x_i2c_45 {
++	status = "okay";
++};
+ 
+ &i2c_5 {
+ 	tc358743@0f {
+diff --git a/kernel/msm-3.18/sound/soc/codecs/msm8x16-wcd.c b/kernel/msm-3.18/sound/soc/codecs/msm8x16-wcd.c
+old mode 100644
+new mode 100755
+index f6c7839..ec61422
+--- a/kernel/msm-3.18/sound/soc/codecs/msm8x16-wcd.c
++++ b/kernel/msm-3.18/sound/soc/codecs/msm8x16-wcd.c
+@@ -5733,6 +5733,41 @@ static void msm8x16_wcd_configure_cap(struct snd_soc_codec *codec,
+ 	}
+ }
+ 
++static struct snd_soc_jack mic_jack;
++static struct snd_soc_jack_pin mic_jack_pins[] = {
++	{
++		.pin = "Mic Jack",
++		.mask = SND_JACK_MICROPHONE,
++	},
++};
++static struct snd_soc_jack_gpio mic_jack_gpio = {
++	.name = "Mic detection",
++	.report = SND_JACK_MICROPHONE,
++	.debounce_time = 150,
++};
++static void mic_det_add(struct snd_soc_codec *codec)
++{
++	struct snd_soc_card *card = codec->component.card;
++	int gpio = of_get_named_gpio_flags(card->dev->of_node, "mic-det-gpio", 0, NULL);
++	
++	pr_err("%s, gpio = %d\n",__func__, gpio);
++	
++	if (gpio_is_valid(gpio)) {
++		snd_soc_jack_new(codec, "Mic Jack", SND_JACK_HEADSET, &mic_jack);
++		
++		snd_soc_jack_add_pins(&mic_jack, ARRAY_SIZE(mic_jack_pins), mic_jack_pins);
++		
++		mic_jack_gpio.gpio = gpio;
++		snd_soc_jack_add_gpios(&mic_jack, 1, &mic_jack_gpio);
++	}
++}
++static void mic_det_remove(void)
++{
++	pr_err("%s\n",__func__);
++	if (gpio_is_valid(mic_jack_gpio.gpio))
++		snd_soc_jack_free_gpios(&mic_jack, 1, &mic_jack_gpio);
++}
++
+ static int msm8x16_wcd_codec_probe(struct snd_soc_codec *codec)
+ {
+ 	struct msm8x16_wcd_priv *msm8x16_wcd_priv;
+@@ -5850,6 +5885,8 @@ static int msm8x16_wcd_codec_probe(struct snd_soc_codec *codec)
+ 		return ret;
+ 	}
+ 
++	if (0)
++		mic_det_add(codec);
+ 	wcd_mbhc_init(&msm8x16_wcd_priv->mbhc, codec, &mbhc_cb, &intr_ids,
+ 		      wcd_mbhc_registers, true);
+ 
+@@ -5888,6 +5925,8 @@ static int msm8x16_wcd_codec_remove(struct snd_soc_codec *codec)
+ 					snd_soc_codec_get_drvdata(codec);
+ 	struct msm8x16_wcd *msm8x16_wcd;
+ 
++	if (0)
++		mic_det_remove();
+ 	msm8x16_wcd = codec->control_data;
+ 	msm8x16_wcd_priv->spkdrv_reg = NULL;
+ 	msm8x16_wcd_priv->on_demand_list[ON_DEMAND_MICBIAS].supply = NULL;
+diff --git a/kernel/msm-3.18/sound/soc/codecs/wcd-mbhc-v2.c b/kernel/msm-3.18/sound/soc/codecs/wcd-mbhc-v2.c
+old mode 100644
+new mode 100755
+index 43ea035..7fcd221
+--- a/kernel/msm-3.18/sound/soc/codecs/wcd-mbhc-v2.c
++++ b/kernel/msm-3.18/sound/soc/codecs/wcd-mbhc-v2.c
+@@ -40,8 +40,8 @@
+ 				  SND_JACK_BTN_4 | SND_JACK_BTN_5 | \
+ 				  SND_JACK_BTN_6 | SND_JACK_BTN_7)
+ #define OCP_ATTEMPT 1
+-#define HS_DETECT_PLUG_TIME_MS (3 * 1000)
+-#define SPECIAL_HS_DETECT_TIME_MS (2 * 1000)
++#define HS_DETECT_PLUG_TIME_MS (3 * 300)
++#define SPECIAL_HS_DETECT_TIME_MS (2 * 300)
+ #define MBHC_BUTTON_PRESS_THRESHOLD_MIN 250
+ #define GND_MIC_SWAP_THRESHOLD 4
+ #define WCD_FAKE_REMOVAL_MIN_PERIOD_MS 100
