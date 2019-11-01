@@ -1,0 +1,54 @@
+diff --git a/lk/app/aboot/aboot.c b/lk/app/aboot/aboot.c
+old mode 100755
+new mode 100644
+index 943c70e..fb6c3bf
+--- a/lk/app/aboot/aboot.c
++++ b/lk/app/aboot/aboot.c
+@@ -80,6 +80,15 @@
+ #define GPIO_LOW_VALUE 0
+ 
+ #define LK_VERSION "V5"
++#define MACRO_LCD_480p "480p"
++#define MACRO_LCD_720p "720p"
++
++
++enum lcd_resolution {
++	LCD_480P = 480,
++	LCD_720P = 720,
++};
++
+ extern  bool target_use_signed_kernel(void);
+ extern void platform_uninit(void);
+ extern void target_uninit(void);
+@@ -1008,6 +1017,7 @@ int boot_linux_from_mmc(void)
+        unsigned int file_leng;
+        unsigned turn_offset = 0;
+        unsigned char serial_info[8];
++	   struct fbcon_config *fb_display = NULL;
+ //       unsigned char *tempbuf = NULL;
+ #if DEVICE_TREE
+ 	struct dt_table *table;
+@@ -1418,7 +1428,22 @@ unified_boot:
+        strcat(hdr->cmdline, serial_info);
+ 	   strcat(hdr->cmdline, " Lk_Version=");
+ 	   strcat(hdr->cmdline, LK_VERSION);
+-	boot_linux((void *)hdr->kernel_addr, (void *)hdr->tags_addr,
++	   fb_display = fbcon_display();
++	   if(fb_display) {
++	   		dprintf(ALWAYS, "fb_display->width = %d, fb_display->height= %d\n", fb_display->width, fb_display->height);
++			strcat(hdr->cmdline, " LCD_SIZE=");
++			switch(fb_display->width){
++			 case LCD_480P:
++			 	strcat(hdr->cmdline, MACRO_LCD_480p);
++			 	break;
++			 case LCD_720P:
++				strcat(hdr->cmdline, MACRO_LCD_720p);
++			 	break;
++			 default:
++			 	break;	 	
++			}
++	   }
++		boot_linux((void *)hdr->kernel_addr, (void *)hdr->tags_addr,
+ 		   (const char *)hdr->cmdline, board_machtype(),
+ 		   (void *)hdr->ramdisk_addr, hdr->ramdisk_size);
+ 

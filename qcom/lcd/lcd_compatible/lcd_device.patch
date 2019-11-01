@@ -1,0 +1,363 @@
+diff --git a/msm8909/msm8909.mk b/msm8909/msm8909.mk
+index 933c6db..7b6379b 100644
+--- a/msm8909/msm8909.mk
++++ b/msm8909/msm8909.mk
+@@ -192,28 +192,48 @@ PRODUCT_COPY_FILES += \
+ 		device/qcom/msm8909/pinimages/def/keypad.cfg:system/media/pinimages/def/keypad.cfg
+ 				
+ PRODUCT_COPY_FILES += \
+-		device/qcom/msm8909/pinimages/1/backimg.jpg:system/media/pinimages/1/backimg.jpg \
+-		device/qcom/msm8909/pinimages/1/backimg_en.jpg:system/media/pinimages/1/backimg_en.jpg \
+-		device/qcom/msm8909/pinimages/1/asterisk.png:system/media/pinimages/1/asterisk.png \
+-		device/qcom/msm8909/pinimages/1/cancel.png:system/media/pinimages/1/cancel.png \
+-		device/qcom/msm8909/pinimages/1/clear.png:system/media/pinimages/1/clear.png \
+-		device/qcom/msm8909/pinimages/1/jin.png:system/media/pinimages/1/jin.png \
+-		device/qcom/msm8909/pinimages/1/sure.png:system/media/pinimages/1/sure.png \
+-		device/qcom/msm8909/pinimages/1/xing.png:system/media/pinimages/1/xing.png \
+-		device/qcom/msm8909/pinimages/1/num_0.png:system/media/pinimages/1/num_0.png \
+-		device/qcom/msm8909/pinimages/1/num_1.png:system/media/pinimages/1/num_1.png \
+-		device/qcom/msm8909/pinimages/1/num_2.png:system/media/pinimages/1/num_2.png \
+-		device/qcom/msm8909/pinimages/1/num_3.png:system/media/pinimages/1/num_3.png \
+-		device/qcom/msm8909/pinimages/1/num_4.png:system/media/pinimages/1/num_4.png \
+-		device/qcom/msm8909/pinimages/1/num_5.png:system/media/pinimages/1/num_5.png \
+-		device/qcom/msm8909/pinimages/1/num_6.png:system/media/pinimages/1/num_6.png \
+-		device/qcom/msm8909/pinimages/1/num_7.png:system/media/pinimages/1/num_7.png \
+-		device/qcom/msm8909/pinimages/1/num_8.png:system/media/pinimages/1/num_8.png \
+-		device/qcom/msm8909/pinimages/1/num_9.png:system/media/pinimages/1/num_9.png		
++		device/qcom/msm8909/pinimages/1/hdpi/backimg.jpg:system/media/pinimages/1/hdpi/backimg.jpg \
++		device/qcom/msm8909/pinimages/1/hdpi/backimg_en.jpg:system/media/pinimages/1/hdpi/backimg_en.jpg \
++		device/qcom/msm8909/pinimages/1/hdpi/asterisk.png:system/media/pinimages/1/hdpi/asterisk.png \
++		device/qcom/msm8909/pinimages/1/hdpi/cancel.png:system/media/pinimages/1/hdpi/cancel.png \
++		device/qcom/msm8909/pinimages/1/hdpi/clear.png:system/media/pinimages/1/hdpi/clear.png \
++		device/qcom/msm8909/pinimages/1/hdpi/jin.png:system/media/pinimages/1/hdpi/jin.png \
++		device/qcom/msm8909/pinimages/1/hdpi/sure.png:system/media/pinimages/1/hdpi/sure.png \
++		device/qcom/msm8909/pinimages/1/hdpi/xing.png:system/media/pinimages/1/hdpi/xing.png \
++		device/qcom/msm8909/pinimages/1/hdpi/num_0.png:system/media/pinimages/1/hdpi/num_0.png \
++		device/qcom/msm8909/pinimages/1/hdpi/num_1.png:system/media/pinimages/1/hdpi/num_1.png \
++		device/qcom/msm8909/pinimages/1/hdpi/num_2.png:system/media/pinimages/1/hdpi/num_2.png \
++		device/qcom/msm8909/pinimages/1/hdpi/num_3.png:system/media/pinimages/1/hdpi/num_3.png \
++		device/qcom/msm8909/pinimages/1/hdpi/num_4.png:system/media/pinimages/1/hdpi/num_4.png \
++		device/qcom/msm8909/pinimages/1/hdpi/num_5.png:system/media/pinimages/1/hdpi/num_5.png \
++		device/qcom/msm8909/pinimages/1/hdpi/num_6.png:system/media/pinimages/1/hdpi/num_6.png \
++		device/qcom/msm8909/pinimages/1/hdpi/num_7.png:system/media/pinimages/1/hdpi/num_7.png \
++		device/qcom/msm8909/pinimages/1/hdpi/num_8.png:system/media/pinimages/1/hdpi/num_8.png \
++		device/qcom/msm8909/pinimages/1/hdpi/num_9.png:system/media/pinimages/1/hdpi/num_9.png	\
++		device/qcom/msm8909/pinimages/1/xhdpi/backimg.jpg:system/media/pinimages/1/xhdpi/backimg.jpg \
++		device/qcom/msm8909/pinimages/1/xhdpi/backimg_en.jpg:system/media/pinimages/1/xhdpi/backimg_en.jpg \
++		device/qcom/msm8909/pinimages/1/xhdpi/asterisk.png:system/media/pinimages/1/xhdpi/asterisk.png \
++		device/qcom/msm8909/pinimages/1/xhdpi/cancel.png:system/media/pinimages/1/xhdpi/cancel.png \
++		device/qcom/msm8909/pinimages/1/xhdpi/clear.png:system/media/pinimages/1/xhdpi/clear.png \
++		device/qcom/msm8909/pinimages/1/xhdpi/jin.png:system/media/pinimages/1/xhdpi/jin.png \
++		device/qcom/msm8909/pinimages/1/xhdpi/sure.png:system/media/pinimages/1/xhdpi/sure.png \
++		device/qcom/msm8909/pinimages/1/xhdpi/xing.png:system/media/pinimages/1/xhdpi/xing.png \
++		device/qcom/msm8909/pinimages/1/xhdpi/num_0.png:system/media/pinimages/1/xhdpi/num_0.png \
++		device/qcom/msm8909/pinimages/1/xhdpi/num_1.png:system/media/pinimages/1/xhdpi/num_1.png \
++		device/qcom/msm8909/pinimages/1/xhdpi/num_2.png:system/media/pinimages/1/xhdpi/num_2.png \
++		device/qcom/msm8909/pinimages/1/xhdpi/num_3.png:system/media/pinimages/1/xhdpi/num_3.png \
++		device/qcom/msm8909/pinimages/1/xhdpi/num_4.png:system/media/pinimages/1/xhdpi/num_4.png \
++		device/qcom/msm8909/pinimages/1/xhdpi/num_5.png:system/media/pinimages/1/xhdpi/num_5.png \
++		device/qcom/msm8909/pinimages/1/xhdpi/num_6.png:system/media/pinimages/1/xhdpi/num_6.png \
++		device/qcom/msm8909/pinimages/1/xhdpi/num_7.png:system/media/pinimages/1/xhdpi/num_7.png \
++		device/qcom/msm8909/pinimages/1/xhdpi/num_8.png:system/media/pinimages/1/xhdpi/num_8.png \
++		device/qcom/msm8909/pinimages/1/xhdpi/num_9.png:system/media/pinimages/1/xhdpi/num_9.png		
+ 
+ PRODUCT_COPY_FILES += \
+-		device/qcom/msm8909/pinimages/1/asterisk.cfg:system/media/pinimages/1/asterisk.cfg \
+-		device/qcom/msm8909/pinimages/1/keypad.cfg:system/media/pinimages/1/keypad.cfg		
++		device/qcom/msm8909/pinimages/1/hdpi/asterisk.cfg:system/media/pinimages/1/hdpi/asterisk.cfg \
++		device/qcom/msm8909/pinimages/1/xhdpi/asterisk.cfg:system/media/pinimages/1/xhdpi/asterisk.cfg \
++		device/qcom/msm8909/pinimages/1/hdpi/keypad.cfg:system/media/pinimages/1/hdpi/keypad.cfg	\
++		device/qcom/msm8909/pinimages/1/xhdpi/keypad.cfg:system/media/pinimages/1/xhdpi/keypad.cfg
+     
+ # Audio configuration file
+ PRODUCT_COPY_FILES += \
+diff --git a/msm8909/pinimages/1/asterisk.cfg b/msm8909/pinimages/1/asterisk.cfg
+deleted file mode 100644
+index 3d7268a..0000000
+--- a/msm8909/pinimages/1/asterisk.cfg
++++ /dev/null
+@@ -1,4 +0,0 @@
+-mAsteriskBoxTopMargin:20
+-mAsteriskBoxBottomMargin:572
+-mAsteriskBoxLeftMargin:38
+-mAsteriskBoxRightMargin:39
+\ No newline at end of file
+diff --git a/msm8909/pinimages/1/asterisk.png b/msm8909/pinimages/1/asterisk.png
+deleted file mode 100644
+index 4965026..0000000
+Binary files a/msm8909/pinimages/1/asterisk.png and /dev/null differ
+diff --git a/msm8909/pinimages/1/backimg.jpg b/msm8909/pinimages/1/backimg.jpg
+deleted file mode 100644
+index 43ae43a..0000000
+Binary files a/msm8909/pinimages/1/backimg.jpg and /dev/null differ
+diff --git a/msm8909/pinimages/1/backimg_en.jpg b/msm8909/pinimages/1/backimg_en.jpg
+deleted file mode 100644
+index 9ceddaa..0000000
+Binary files a/msm8909/pinimages/1/backimg_en.jpg and /dev/null differ
+diff --git a/msm8909/pinimages/1/backimg_yunpos.jpg b/msm8909/pinimages/1/backimg_yunpos.jpg
+deleted file mode 100644
+index 5973bc4..0000000
+Binary files a/msm8909/pinimages/1/backimg_yunpos.jpg and /dev/null differ
+diff --git a/msm8909/pinimages/1/cancel.png b/msm8909/pinimages/1/cancel.png
+deleted file mode 100644
+index 3dcece1..0000000
+Binary files a/msm8909/pinimages/1/cancel.png and /dev/null differ
+diff --git a/msm8909/pinimages/1/clear.png b/msm8909/pinimages/1/clear.png
+deleted file mode 100644
+index 75b5b7d..0000000
+Binary files a/msm8909/pinimages/1/clear.png and /dev/null differ
+diff --git a/msm8909/pinimages/1/hdpi/asterisk.cfg b/msm8909/pinimages/1/hdpi/asterisk.cfg
+new file mode 100644
+index 0000000..30f1534
+--- /dev/null
++++ b/msm8909/pinimages/1/hdpi/asterisk.cfg
+@@ -0,0 +1,4 @@
++mAsteriskBoxTopMargin:20
++mAsteriskBoxBottomMargin:400
++mAsteriskBoxLeftMargin:38
++mAsteriskBoxRightMargin:39
+\ No newline at end of file
+diff --git a/msm8909/pinimages/1/hdpi/asterisk.png b/msm8909/pinimages/1/hdpi/asterisk.png
+new file mode 100644
+index 0000000..4965026
+Binary files /dev/null and b/msm8909/pinimages/1/hdpi/asterisk.png differ
+diff --git a/msm8909/pinimages/1/hdpi/backimg.jpg b/msm8909/pinimages/1/hdpi/backimg.jpg
+new file mode 100644
+index 0000000..564df23
+Binary files /dev/null and b/msm8909/pinimages/1/hdpi/backimg.jpg differ
+diff --git a/msm8909/pinimages/1/hdpi/backimg_en.jpg b/msm8909/pinimages/1/hdpi/backimg_en.jpg
+new file mode 100644
+index 0000000..cff5739
+Binary files /dev/null and b/msm8909/pinimages/1/hdpi/backimg_en.jpg differ
+diff --git a/msm8909/pinimages/1/hdpi/cancel.png b/msm8909/pinimages/1/hdpi/cancel.png
+new file mode 100644
+index 0000000..8e4934d
+Binary files /dev/null and b/msm8909/pinimages/1/hdpi/cancel.png differ
+diff --git a/msm8909/pinimages/1/hdpi/clear.png b/msm8909/pinimages/1/hdpi/clear.png
+new file mode 100644
+index 0000000..3f1d2b5
+Binary files /dev/null and b/msm8909/pinimages/1/hdpi/clear.png differ
+diff --git a/msm8909/pinimages/1/hdpi/jin.png b/msm8909/pinimages/1/hdpi/jin.png
+new file mode 100644
+index 0000000..8f2f017
+Binary files /dev/null and b/msm8909/pinimages/1/hdpi/jin.png differ
+diff --git a/msm8909/pinimages/1/hdpi/keypad.cfg b/msm8909/pinimages/1/hdpi/keypad.cfg
+new file mode 100644
+index 0000000..131c9d8
+--- /dev/null
++++ b/msm8909/pinimages/1/hdpi/keypad.cfg
+@@ -0,0 +1,4 @@
++mKeypadWidthMargin:3
++mKeypadHeightMargin:7
++mKeypadLeftMargin:3
++mKeypadBottomMargin:4
+\ No newline at end of file
+diff --git a/msm8909/pinimages/1/hdpi/num_0.png b/msm8909/pinimages/1/hdpi/num_0.png
+new file mode 100644
+index 0000000..0f82b73
+Binary files /dev/null and b/msm8909/pinimages/1/hdpi/num_0.png differ
+diff --git a/msm8909/pinimages/1/hdpi/num_1.png b/msm8909/pinimages/1/hdpi/num_1.png
+new file mode 100644
+index 0000000..6311e73
+Binary files /dev/null and b/msm8909/pinimages/1/hdpi/num_1.png differ
+diff --git a/msm8909/pinimages/1/hdpi/num_2.png b/msm8909/pinimages/1/hdpi/num_2.png
+new file mode 100644
+index 0000000..b0a05ef
+Binary files /dev/null and b/msm8909/pinimages/1/hdpi/num_2.png differ
+diff --git a/msm8909/pinimages/1/hdpi/num_3.png b/msm8909/pinimages/1/hdpi/num_3.png
+new file mode 100644
+index 0000000..4ccf6a0
+Binary files /dev/null and b/msm8909/pinimages/1/hdpi/num_3.png differ
+diff --git a/msm8909/pinimages/1/hdpi/num_4.png b/msm8909/pinimages/1/hdpi/num_4.png
+new file mode 100644
+index 0000000..c075e64
+Binary files /dev/null and b/msm8909/pinimages/1/hdpi/num_4.png differ
+diff --git a/msm8909/pinimages/1/hdpi/num_5.png b/msm8909/pinimages/1/hdpi/num_5.png
+new file mode 100644
+index 0000000..32a41ac
+Binary files /dev/null and b/msm8909/pinimages/1/hdpi/num_5.png differ
+diff --git a/msm8909/pinimages/1/hdpi/num_6.png b/msm8909/pinimages/1/hdpi/num_6.png
+new file mode 100644
+index 0000000..b0be205
+Binary files /dev/null and b/msm8909/pinimages/1/hdpi/num_6.png differ
+diff --git a/msm8909/pinimages/1/hdpi/num_7.png b/msm8909/pinimages/1/hdpi/num_7.png
+new file mode 100644
+index 0000000..e94fa58
+Binary files /dev/null and b/msm8909/pinimages/1/hdpi/num_7.png differ
+diff --git a/msm8909/pinimages/1/hdpi/num_8.png b/msm8909/pinimages/1/hdpi/num_8.png
+new file mode 100644
+index 0000000..e62619b
+Binary files /dev/null and b/msm8909/pinimages/1/hdpi/num_8.png differ
+diff --git a/msm8909/pinimages/1/hdpi/num_9.png b/msm8909/pinimages/1/hdpi/num_9.png
+new file mode 100644
+index 0000000..460f26d
+Binary files /dev/null and b/msm8909/pinimages/1/hdpi/num_9.png differ
+diff --git a/msm8909/pinimages/1/hdpi/sure.png b/msm8909/pinimages/1/hdpi/sure.png
+new file mode 100644
+index 0000000..df23b6f
+Binary files /dev/null and b/msm8909/pinimages/1/hdpi/sure.png differ
+diff --git a/msm8909/pinimages/1/hdpi/xing.png b/msm8909/pinimages/1/hdpi/xing.png
+new file mode 100644
+index 0000000..6967222
+Binary files /dev/null and b/msm8909/pinimages/1/hdpi/xing.png differ
+diff --git a/msm8909/pinimages/1/jin.png b/msm8909/pinimages/1/jin.png
+deleted file mode 100644
+index 9c4a51a..0000000
+Binary files a/msm8909/pinimages/1/jin.png and /dev/null differ
+diff --git a/msm8909/pinimages/1/keypad.cfg b/msm8909/pinimages/1/keypad.cfg
+deleted file mode 100755
+index 131c9d8..0000000
+--- a/msm8909/pinimages/1/keypad.cfg
++++ /dev/null
+@@ -1,4 +0,0 @@
+-mKeypadWidthMargin:3
+-mKeypadHeightMargin:7
+-mKeypadLeftMargin:3
+-mKeypadBottomMargin:4
+\ No newline at end of file
+diff --git a/msm8909/pinimages/1/num_0.png b/msm8909/pinimages/1/num_0.png
+deleted file mode 100644
+index 6d5f169..0000000
+Binary files a/msm8909/pinimages/1/num_0.png and /dev/null differ
+diff --git a/msm8909/pinimages/1/num_1.png b/msm8909/pinimages/1/num_1.png
+deleted file mode 100644
+index 1f1fb7b..0000000
+Binary files a/msm8909/pinimages/1/num_1.png and /dev/null differ
+diff --git a/msm8909/pinimages/1/num_2.png b/msm8909/pinimages/1/num_2.png
+deleted file mode 100644
+index 6567fba..0000000
+Binary files a/msm8909/pinimages/1/num_2.png and /dev/null differ
+diff --git a/msm8909/pinimages/1/num_3.png b/msm8909/pinimages/1/num_3.png
+deleted file mode 100644
+index 858214a..0000000
+Binary files a/msm8909/pinimages/1/num_3.png and /dev/null differ
+diff --git a/msm8909/pinimages/1/num_4.png b/msm8909/pinimages/1/num_4.png
+deleted file mode 100644
+index 3c98265..0000000
+Binary files a/msm8909/pinimages/1/num_4.png and /dev/null differ
+diff --git a/msm8909/pinimages/1/num_5.png b/msm8909/pinimages/1/num_5.png
+deleted file mode 100644
+index a10c140..0000000
+Binary files a/msm8909/pinimages/1/num_5.png and /dev/null differ
+diff --git a/msm8909/pinimages/1/num_6.png b/msm8909/pinimages/1/num_6.png
+deleted file mode 100644
+index 719d3b3..0000000
+Binary files a/msm8909/pinimages/1/num_6.png and /dev/null differ
+diff --git a/msm8909/pinimages/1/num_7.png b/msm8909/pinimages/1/num_7.png
+deleted file mode 100644
+index fbb6dee..0000000
+Binary files a/msm8909/pinimages/1/num_7.png and /dev/null differ
+diff --git a/msm8909/pinimages/1/num_8.png b/msm8909/pinimages/1/num_8.png
+deleted file mode 100644
+index 28caf8f..0000000
+Binary files a/msm8909/pinimages/1/num_8.png and /dev/null differ
+diff --git a/msm8909/pinimages/1/num_9.png b/msm8909/pinimages/1/num_9.png
+deleted file mode 100644
+index d4dcf28..0000000
+Binary files a/msm8909/pinimages/1/num_9.png and /dev/null differ
+diff --git a/msm8909/pinimages/1/sure.png b/msm8909/pinimages/1/sure.png
+deleted file mode 100644
+index d342398..0000000
+Binary files a/msm8909/pinimages/1/sure.png and /dev/null differ
+diff --git a/msm8909/pinimages/1/xhdpi/asterisk.cfg b/msm8909/pinimages/1/xhdpi/asterisk.cfg
+new file mode 100644
+index 0000000..3d7268a
+--- /dev/null
++++ b/msm8909/pinimages/1/xhdpi/asterisk.cfg
+@@ -0,0 +1,4 @@
++mAsteriskBoxTopMargin:20
++mAsteriskBoxBottomMargin:572
++mAsteriskBoxLeftMargin:38
++mAsteriskBoxRightMargin:39
+\ No newline at end of file
+diff --git a/msm8909/pinimages/1/xhdpi/asterisk.png b/msm8909/pinimages/1/xhdpi/asterisk.png
+new file mode 100644
+index 0000000..4965026
+Binary files /dev/null and b/msm8909/pinimages/1/xhdpi/asterisk.png differ
+diff --git a/msm8909/pinimages/1/xhdpi/backimg.jpg b/msm8909/pinimages/1/xhdpi/backimg.jpg
+new file mode 100644
+index 0000000..43ae43a
+Binary files /dev/null and b/msm8909/pinimages/1/xhdpi/backimg.jpg differ
+diff --git a/msm8909/pinimages/1/xhdpi/backimg_en.jpg b/msm8909/pinimages/1/xhdpi/backimg_en.jpg
+new file mode 100644
+index 0000000..9ceddaa
+Binary files /dev/null and b/msm8909/pinimages/1/xhdpi/backimg_en.jpg differ
+diff --git a/msm8909/pinimages/1/xhdpi/backimg_yunpos.jpg b/msm8909/pinimages/1/xhdpi/backimg_yunpos.jpg
+new file mode 100644
+index 0000000..5973bc4
+Binary files /dev/null and b/msm8909/pinimages/1/xhdpi/backimg_yunpos.jpg differ
+diff --git a/msm8909/pinimages/1/xhdpi/cancel.png b/msm8909/pinimages/1/xhdpi/cancel.png
+new file mode 100644
+index 0000000..3dcece1
+Binary files /dev/null and b/msm8909/pinimages/1/xhdpi/cancel.png differ
+diff --git a/msm8909/pinimages/1/xhdpi/clear.png b/msm8909/pinimages/1/xhdpi/clear.png
+new file mode 100644
+index 0000000..75b5b7d
+Binary files /dev/null and b/msm8909/pinimages/1/xhdpi/clear.png differ
+diff --git a/msm8909/pinimages/1/xhdpi/jin.png b/msm8909/pinimages/1/xhdpi/jin.png
+new file mode 100644
+index 0000000..9c4a51a
+Binary files /dev/null and b/msm8909/pinimages/1/xhdpi/jin.png differ
+diff --git a/msm8909/pinimages/1/xhdpi/keypad.cfg b/msm8909/pinimages/1/xhdpi/keypad.cfg
+new file mode 100644
+index 0000000..131c9d8
+--- /dev/null
++++ b/msm8909/pinimages/1/xhdpi/keypad.cfg
+@@ -0,0 +1,4 @@
++mKeypadWidthMargin:3
++mKeypadHeightMargin:7
++mKeypadLeftMargin:3
++mKeypadBottomMargin:4
+\ No newline at end of file
+diff --git a/msm8909/pinimages/1/xhdpi/num_0.png b/msm8909/pinimages/1/xhdpi/num_0.png
+new file mode 100644
+index 0000000..6d5f169
+Binary files /dev/null and b/msm8909/pinimages/1/xhdpi/num_0.png differ
+diff --git a/msm8909/pinimages/1/xhdpi/num_1.png b/msm8909/pinimages/1/xhdpi/num_1.png
+new file mode 100644
+index 0000000..1f1fb7b
+Binary files /dev/null and b/msm8909/pinimages/1/xhdpi/num_1.png differ
+diff --git a/msm8909/pinimages/1/xhdpi/num_2.png b/msm8909/pinimages/1/xhdpi/num_2.png
+new file mode 100644
+index 0000000..6567fba
+Binary files /dev/null and b/msm8909/pinimages/1/xhdpi/num_2.png differ
+diff --git a/msm8909/pinimages/1/xhdpi/num_3.png b/msm8909/pinimages/1/xhdpi/num_3.png
+new file mode 100644
+index 0000000..858214a
+Binary files /dev/null and b/msm8909/pinimages/1/xhdpi/num_3.png differ
+diff --git a/msm8909/pinimages/1/xhdpi/num_4.png b/msm8909/pinimages/1/xhdpi/num_4.png
+new file mode 100644
+index 0000000..3c98265
+Binary files /dev/null and b/msm8909/pinimages/1/xhdpi/num_4.png differ
+diff --git a/msm8909/pinimages/1/xhdpi/num_5.png b/msm8909/pinimages/1/xhdpi/num_5.png
+new file mode 100644
+index 0000000..a10c140
+Binary files /dev/null and b/msm8909/pinimages/1/xhdpi/num_5.png differ
+diff --git a/msm8909/pinimages/1/xhdpi/num_6.png b/msm8909/pinimages/1/xhdpi/num_6.png
+new file mode 100644
+index 0000000..719d3b3
+Binary files /dev/null and b/msm8909/pinimages/1/xhdpi/num_6.png differ
+diff --git a/msm8909/pinimages/1/xhdpi/num_7.png b/msm8909/pinimages/1/xhdpi/num_7.png
+new file mode 100644
+index 0000000..fbb6dee
+Binary files /dev/null and b/msm8909/pinimages/1/xhdpi/num_7.png differ
+diff --git a/msm8909/pinimages/1/xhdpi/num_8.png b/msm8909/pinimages/1/xhdpi/num_8.png
+new file mode 100644
+index 0000000..28caf8f
+Binary files /dev/null and b/msm8909/pinimages/1/xhdpi/num_8.png differ
+diff --git a/msm8909/pinimages/1/xhdpi/num_9.png b/msm8909/pinimages/1/xhdpi/num_9.png
+new file mode 100644
+index 0000000..d4dcf28
+Binary files /dev/null and b/msm8909/pinimages/1/xhdpi/num_9.png differ
+diff --git a/msm8909/pinimages/1/xhdpi/sure.png b/msm8909/pinimages/1/xhdpi/sure.png
+new file mode 100644
+index 0000000..d342398
+Binary files /dev/null and b/msm8909/pinimages/1/xhdpi/sure.png differ
+diff --git a/msm8909/pinimages/1/xhdpi/xing.png b/msm8909/pinimages/1/xhdpi/xing.png
+new file mode 100644
+index 0000000..afd2832
+Binary files /dev/null and b/msm8909/pinimages/1/xhdpi/xing.png differ
+diff --git a/msm8909/pinimages/1/xing.png b/msm8909/pinimages/1/xing.png
+deleted file mode 100644
+index afd2832..0000000
+Binary files a/msm8909/pinimages/1/xing.png and /dev/null differ

@@ -1,0 +1,373 @@
+diff --git a/recovery.cpp b/recovery.cpp
+index ca40a86..55e36f1 100644
+--- a/recovery.cpp
++++ b/recovery.cpp
+@@ -204,6 +204,48 @@ static const int MAX_ARGS = 100;
+ extern int hw_ntj_type;
+ extern int ntj_mac_timeout;
+ 
++
++//lcd_size added by linhao
++
++#define LCD_BUF_SIZE 512
++
++
++
++static int getResolutionByCmdline() {
++	char cmdline_path[LCD_BUF_SIZE] = "/proc/cmdline";
++    char buf[LCD_BUF_SIZE] = {0};
++    char resoltion_array[2][20] = {"LCD_SIZE=480p", "LCD_SIZE=720p"};
++    int i=0;
++    char * ret;
++	FILE* fp = fopen(cmdline_path, "r");
++	if(NULL != fp){
++         if( fgets(buf, LCD_BUF_SIZE-1, fp)== NULL ){
++             fclose(fp);
++         }
++         fclose(fp);
++	}
++
++	for(i=0; i<2; i++){
++        printf("resoltion_array = %s\n", resoltion_array[i]);
++        if(((ret = strstr(buf, resoltion_array[i])) != NULL)){
++            break;
++        }
++        printf("ret = %s\n", ret);
++	}
++
++    switch(i){
++    case LCD_480P:
++        return 480;
++        break;
++    case LCD_720P:
++        return 720;
++        break;
++    default:
++        break;
++    }
++    return 0;
++}
++
+ void update_security_reg(void);
+ // open a given path, mounting partitions as necessary
+ FILE*
+@@ -1010,8 +1052,13 @@ void unlock_device(void) {
+ 				show_tag = 1;
+                 		break;
+       		}
+-		if(show_tag)
+-			ui->ShowSecureInterface(1,40,900,pStr,strlen(pStr));
++		if(show_tag){
++			if(getResolutionByCmdline() == 720) {
++				ui->ShowSecureInterface(1,40,900,pStr,strlen(pStr));
++			}else if(getResolutionByCmdline() == 480){
++				ui->ShowSecureInterface(1,20,740,pStr,strlen(pStr));
++			}
++		}
+ 	}
+ 
+        spi_ddi_sys_twoway_auth_exit();
+@@ -1105,13 +1152,23 @@ security_info_download(void) {
+ 				show_tag = 1;	
+                 		break;
+       		}
+-		if(show_tag)
+-			ui->ShowSecureInterface(2,40,900,pStr,strlen(pStr));
++		if(show_tag){
++			if(getResolutionByCmdline() == 720) {
++				ui->ShowSecureInterface(2,40,900,pStr,strlen(pStr));
++			}else if(getResolutionByCmdline() == 480){
++				ui->ShowSecureInterface(2,20,660,pStr,strlen(pStr));
++			}
++		}
++			
+ 	}
+ 
+ 	close_port();
+ 	
+-	ui->ShowSecureInterface(2,40,900,pStr,strlen(pStr));
++	if(getResolutionByCmdline() == 720) {
++		ui->ShowSecureInterface(2,40,900,pStr,strlen(pStr));
++	}else if(getResolutionByCmdline() == 480){
++		ui->ShowSecureInterface(2,20,700,pStr,strlen(pStr));
++	}
+ 	usleep(3*1000*1000);
+ 	
+ 	uninit_download();
+@@ -1178,9 +1235,14 @@ static int security_hwc_download(void) {
+ 				pl2303_plugged = 0;
+ 			}
+ 		}
+-		if(show_tag)
+-			ui->ShowSecureInterface(3,40,900,pStr,strlen(pStr));
++		if(show_tag){
++			if(getResolutionByCmdline() == 720) {
++				ui->ShowSecureInterface(3,40,900,pStr,strlen(pStr));
++			}else if(getResolutionByCmdline() == 480){
++				ui->ShowSecureInterface(3,20,660,pStr,strlen(pStr));
++			}
+ 			printf("security_hwc_download 0 ----------\n");
++		}
+ 		if(!hw_info_timeout){
+ 			result = hwc_download(0);
+ 			printf("security_hwc_download 1 result = %d ----------\n",result);
+@@ -1254,13 +1316,22 @@ static int security_hwc_download(void) {
+ 				show_tag = 1;	
+                 break;
+ 		}
+-		if(show_tag)
+-			ui->ShowSecureInterface(3,40,900,pStr,strlen(pStr));
++		if(show_tag){
++			if(getResolutionByCmdline() == 720) {
++				ui->ShowSecureInterface(3,40,900,pStr,strlen(pStr));
++			}else if(getResolutionByCmdline() == 480){
++				ui->ShowSecureInterface(3,20,660,pStr,strlen(pStr));
++			}
++		}
+ 	}
+ 
+ 	close_port();
+ 	
+-	ui->ShowSecureInterface(3,40,900,pStr,strlen(pStr));
++	if(getResolutionByCmdline() == 720) {
++		ui->ShowSecureInterface(3,40,900,pStr,strlen(pStr));
++	}else if(getResolutionByCmdline() == 480){
++		ui->ShowSecureInterface(3,20,700,pStr,strlen(pStr));
++	}
+ 	usleep(3*1000*1000);
+ 	
+ 	uninit_download();
+diff --git a/res-xhdpi/images/down_hwc_info.png b/res-xhdpi/images/down_hwc_info.png
+deleted file mode 100644
+index 654bc4a..0000000
+Binary files a/res-xhdpi/images/down_hwc_info.png and /dev/null differ
+diff --git a/res-xhdpi/images/down_hwc_info_480p.png b/res-xhdpi/images/down_hwc_info_480p.png
+new file mode 100644
+index 0000000..d03328a
+Binary files /dev/null and b/res-xhdpi/images/down_hwc_info_480p.png differ
+diff --git a/res-xhdpi/images/down_hwc_info_720p.png b/res-xhdpi/images/down_hwc_info_720p.png
+new file mode 100644
+index 0000000..654bc4a
+Binary files /dev/null and b/res-xhdpi/images/down_hwc_info_720p.png differ
+diff --git a/res-xhdpi/images/down_sec_info.png b/res-xhdpi/images/down_sec_info.png
+deleted file mode 100644
+index 6b6a9c2..0000000
+Binary files a/res-xhdpi/images/down_sec_info.png and /dev/null differ
+diff --git a/res-xhdpi/images/down_sec_info_480p.png b/res-xhdpi/images/down_sec_info_480p.png
+new file mode 100644
+index 0000000..d9aaf1b
+Binary files /dev/null and b/res-xhdpi/images/down_sec_info_480p.png differ
+diff --git a/res-xhdpi/images/down_sec_info_720p.png b/res-xhdpi/images/down_sec_info_720p.png
+new file mode 100644
+index 0000000..6b6a9c2
+Binary files /dev/null and b/res-xhdpi/images/down_sec_info_720p.png differ
+diff --git a/res-xhdpi/images/passwdinput.png b/res-xhdpi/images/passwdinput.png
+deleted file mode 100644
+index 1824117..0000000
+Binary files a/res-xhdpi/images/passwdinput.png and /dev/null differ
+diff --git a/res-xhdpi/images/passwdinput_480p.png b/res-xhdpi/images/passwdinput_480p.png
+new file mode 100644
+index 0000000..0f2bbfa
+Binary files /dev/null and b/res-xhdpi/images/passwdinput_480p.png differ
+diff --git a/res-xhdpi/images/passwdinput_720p.png b/res-xhdpi/images/passwdinput_720p.png
+new file mode 100644
+index 0000000..1824117
+Binary files /dev/null and b/res-xhdpi/images/passwdinput_720p.png differ
+diff --git a/res-xhdpi/images/shutdown_480p.png b/res-xhdpi/images/shutdown_480p.png
+new file mode 100644
+index 0000000..60a52c8
+Binary files /dev/null and b/res-xhdpi/images/shutdown_480p.png differ
+diff --git a/res-xhdpi/images/shutdown_720p.png b/res-xhdpi/images/shutdown_720p.png
+new file mode 100644
+index 0000000..44d1ac0
+Binary files /dev/null and b/res-xhdpi/images/shutdown_720p.png differ
+diff --git a/res-xhdpi/images/unlock_device.png b/res-xhdpi/images/unlock_device.png
+deleted file mode 100644
+index 87de9d7..0000000
+Binary files a/res-xhdpi/images/unlock_device.png and /dev/null differ
+diff --git a/res-xhdpi/images/unlock_device_480p.png b/res-xhdpi/images/unlock_device_480p.png
+new file mode 100644
+index 0000000..81b6cb4
+Binary files /dev/null and b/res-xhdpi/images/unlock_device_480p.png differ
+diff --git a/res-xhdpi/images/unlock_device_720p.png b/res-xhdpi/images/unlock_device_720p.png
+new file mode 100644
+index 0000000..87de9d7
+Binary files /dev/null and b/res-xhdpi/images/unlock_device_720p.png differ
+diff --git a/res-xhdpi/images/wipe_passwd.png b/res-xhdpi/images/wipe_passwd.png
+deleted file mode 100644
+index b9bb82c..0000000
+Binary files a/res-xhdpi/images/wipe_passwd.png and /dev/null differ
+diff --git a/res-xhdpi/images/wipe_passwd_480p.png b/res-xhdpi/images/wipe_passwd_480p.png
+new file mode 100644
+index 0000000..8dd756d
+Binary files /dev/null and b/res-xhdpi/images/wipe_passwd_480p.png differ
+diff --git a/res-xhdpi/images/wipe_passwd_720p.png b/res-xhdpi/images/wipe_passwd_720p.png
+new file mode 100644
+index 0000000..b9bb82c
+Binary files /dev/null and b/res-xhdpi/images/wipe_passwd_720p.png differ
+diff --git a/screen_ui.cpp b/screen_ui.cpp
+index f1a1d11..08467dd 100755
+--- a/screen_ui.cpp
++++ b/screen_ui.cpp
+@@ -133,6 +133,43 @@ void ScreenRecoveryUI::draw_background_locked(Icon icon)
+     }
+ }
+ 
++
++
++int ScreenRecoveryUI::getResolutionByCmdline() {
++	char cmdline_path[LCD_BUF_SIZE] = "/proc/cmdline";
++    char buf[LCD_BUF_SIZE] = {0};
++    char resoltion_array[2][20] = {"LCD_SIZE=480p", "LCD_SIZE=720p"};
++    int i=0;
++    char * ret;
++	FILE* fp = fopen(cmdline_path, "r");
++	if(NULL != fp){
++         if( fgets(buf, LCD_BUF_SIZE-1, fp)== NULL ){
++             fclose(fp);
++         }
++         fclose(fp);
++	}
++
++	for(i=0; i<2; i++){
++        printf("resoltion_array = %s\n", resoltion_array[i]);
++        if(((ret = strstr(buf, resoltion_array[i])) != NULL)){
++            break;
++        }
++        printf("ret = %s\n", ret);
++	}
++
++    switch(i){
++    case LCD_480P:
++        return 480;
++        break;
++    case LCD_720P:
++        return 720;
++        break;
++    default:
++        break;
++    }
++    return 0;
++}
++
+ // Draw the progress bar (if any) on the screen.  Does not flip pages.
+ // Should only be called with updateMutex locked.
+ void ScreenRecoveryUI::draw_progress_locked()
+@@ -371,7 +408,27 @@ void ScreenRecoveryUI::Init()
+     text_cols = gr_fb_width() / char_width;
+     if (text_cols > kMaxCols - 1) text_cols = kMaxCols - 1;
+ 
++	lcd_size = getResolutionByCmdline();
++	LOGE("lcd size = %d\n", lcd_size);
++
+     backgroundIcon[NONE] = NULL;
++	if(lcd_size == 720){
++		LoadBitmap("down_hwc_info_720p", &down_hwc_info);
++		LoadBitmap("down_sec_info_720p", &down_sec_info);
++		LoadBitmap("passwdinput_720p", &passwdInput);
++		LoadBitmap("shutdown_720p", &shutdownpic);
++		LoadBitmap("unlock_device_720p", &unlock_device);
++		LoadBitmap("wipe_passwd_720p", &wipe_passwd);
++		//LOGE("load 720p successful\n\n");
++	}else if(lcd_size == 480){
++		LoadBitmap("down_hwc_info_480p", &down_hwc_info);
++		LoadBitmap("down_sec_info_480p", &down_sec_info);
++		LoadBitmap("passwdinput_480p", &passwdInput);
++		LoadBitmap("shutdown_480p", &shutdownpic);
++		LoadBitmap("unlock_device_480p", &unlock_device);
++		LoadBitmap("wipe_passwd_480p", &wipe_passwd);
++		//LOGE("load 480p successful\n\n");
++	}
+     LoadBitmapArray("icon_installing", &installing_frames, &installation);
+     backgroundIcon[INSTALLING_UPDATE] = installing_frames ? installation[0] : NULL;
+     backgroundIcon[ERASING] = backgroundIcon[INSTALLING_UPDATE];
+@@ -382,12 +439,12 @@ void ScreenRecoveryUI::Init()
+     LoadBitmap("progress_fill", &progressBarFill);
+     LoadBitmap("stage_empty", &stageMarkerEmpty);
+     LoadBitmap("stage_fill", &stageMarkerFill);
+-	LoadBitmap("passwdinput", &passwdInput);
+-	LoadBitmap("shutdown", &shutdownpic);
+-	LoadBitmap("wipe_passwd", &wipe_passwd);
+-	LoadBitmap("unlock_device", &unlock_device);
+-	LoadBitmap("down_sec_info", &down_sec_info);
+-	LoadBitmap("down_hwc_info", &down_hwc_info);
++	
++	
++	
++	
++	
++	
+ 	
+ 
+     LoadLocalizedBitmap("installing_text", &backgroundText[INSTALLING_UPDATE]);
+@@ -562,17 +619,30 @@ void ScreenRecoveryUI::ShowSecureInterface( int type,int x,int y ,char *pStr, in
+ 		printf("ShowSecureInterface : pStr = %s \n",pStr);
+ 	 	gr_text(x, y, pStr, 0);
+ 	}
+-
+-	gr_text(40, 720, note1, 0);
+-	gr_text(40, 720+32, note2, 0);
+-	gr_text(40, 720+32+32, note3, 0);
++	if(lcd_size == 720) {
++		gr_text(40, 720, note1, 0);
++		gr_text(40, 720+32, note2, 0);
++		gr_text(40, 720+32+32, note3, 0);
++	} else if(lcd_size == 480){
++		gr_text(20, 460, note1, 0);
++		gr_text(20, 460+32, note2, 0);
++		gr_text(20, 460+32+32, note3, 0);
++	}
+ 	
+ 	if (type == 1 ) {
+ 		snprintf(temp,256,"	3.security register:\n");
+-		gr_text(40, 720+32+32+32, temp, 0);
++		if(lcd_size == 720){
++			gr_text(40, 720+32+32+32, temp, 0);
++		}else if(lcd_size == 480){
++			gr_text(20, 460+32+32+32, temp, 0);
++		}
+ 		snprintf(temp,256,"		[%08X] [%08X] [%08X]\n",security_reg1,security_reg2,security_reg3);
+-		gr_text(60, 720+32+32+32+32 , temp, 0);
+-    	}
++		if(lcd_size == 720){
++			gr_text(60, 720+32+32+32+32 , temp, 0);
++		}else if(lcd_size == 480){
++			gr_text(40, 460+32+32+32+32 , temp, 0);
++		}
++    }
+ 
+ 		
+ 	gr_flip();
+diff --git a/screen_ui.h b/screen_ui.h
+index a605248..8c32e20 100755
+--- a/screen_ui.h
++++ b/screen_ui.h
+@@ -21,6 +21,14 @@
+ 
+ #include "ui.h"
+ #include "minui/minui.h"
++//lcd_size added by linhao
++#define LCD_BUF_SIZE 512
++enum lcd_resolution{
++    LCD_480P = 0,
++    LCD_720P,
++};
++
++
+ 
+ // Implementation of RecoveryUI appropriate for devices with a screen
+ // (shows an icon + a progress bar, text logging, menu, etc.)
+@@ -60,10 +68,13 @@ class ScreenRecoveryUI : public RecoveryUI {
+ 
+     void Redraw();
+ 
++	int	getResolutionByCmdline();
++
+     enum UIElement { HEADER, MENU, MENU_SEL_BG, MENU_SEL_FG, LOG, TEXT_FILL };
+     virtual void SetColor(UIElement e);
+ 
+   private:
++	int  lcd_size;
+     Icon currentIcon;
+     int installingFrame;
+     const char* locale;

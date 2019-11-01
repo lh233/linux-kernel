@@ -1,0 +1,131 @@
+diff --git a/drivers/input/touchscreen/gt1x/gt1x.c b/drivers/input/touchscreen/gt1x/gt1x.c
+index 055cf6b..cfdc7c3 100755
+--- a/drivers/input/touchscreen/gt1x/gt1x.c
++++ b/drivers/input/touchscreen/gt1x/gt1x.c
+@@ -22,7 +22,7 @@
+ #if GTP_ICS_SLOT_REPORT
+ #include <linux/input/mt.h>
+ #endif
+-
++static int resolution; //为了区别密码键盘的功能
+ static struct work_struct gt1x_work;
+ static struct input_dev *input_dev;
+ static struct workqueue_struct *gt1x_wq;
+@@ -49,6 +49,36 @@ static int gt1x_unregister_powermanger(void);
+ #define DEBUG 0
+ 
+ /**
++ * gt1x_irq_enable - enable irq function.
++ *
++ */
++ static int getResolutionByCmdline(char *cmdline)
++{
++	int ret;
++	int i;
++	char resoltion_array[2][20] = {"LCD_SIZE=480p", "LCD_SIZE=720p"};
++
++	for(i=0; i<2; i++){
++		if((ret = strstr(cmdline, resoltion_array[i])) != NULL) {
++			break;
++		}
++	}
++
++	switch(i){
++		case LCD_480P:
++       	 	return 480;
++        break;
++    	case LCD_720P:
++        	return 720;
++        break;
++    	default:
++        break;
++	}
++	return 0;
++}
++
++
++/**
+  * gt1x_i2c_write - i2c write.
+  * @addr: register address.
+  * @buffer: data buffer.
+@@ -170,6 +200,8 @@ static irqreturn_t gt1x_ts_irq_handler(int irq, void *dev_id)
+  */
+ void gt1x_touch_down(s32 x, s32 y, s32 size, s32 id)
+ {
++	
++
+ 	if(DEBUG)
+ 		printk("touch_down  x = %d y = %d id = %d\n",x,y,id);
+ #if GTP_CHANGE_X2Y
+@@ -188,8 +220,17 @@ if( pin_mode ==1 )
+ { 
+     if(id==0)
+     {
+-	x = (x*720/480)*4096/SCREEN_WIDTH;
+-	y = (y*1280/854)*4096/SCREEN_HEIGHT;
++    if(resolution == 720) {
++		x = (x*720/480)*4096/SCREEN_WIDTH;
++		y = (y*1280/854)*4096/SCREEN_HEIGHT;
++		GTP_INFO("resolution is %d entered\n", resolution);
++    } else if (resolution == 480) {
++		x = x*4096/SCREEN_WIDTH;
++		y = y*4096/SCREEN_HEIGHT;
++		GTP_INFO("resolution is %d entered\n", resolution);
++    } else {
++		printk("cannot read cmdline\n");
++    }
+ 	if(DEBUG){
+ 	    	printk("touch_down  x_start = %d x = %d x_end = %d\n",x_start,x,x_end);
+ 		printk("touch_down  y_start = %d y = %d y_end = %d\n",y_start,y,y_end);
+@@ -646,12 +687,16 @@ static int gt1x_ts_probe(struct i2c_client *client, const struct i2c_device_id *
+ 	//do NOT remove these logs
+ 	GTP_INFO("GTP Driver Version: %s", GTP_DRIVER_VERSION);
+ 	GTP_INFO("GTP I2C Address: 0x%02x", client->addr);
++	GTP_INFO("Kernel cmdline is %s", saved_command_line);
+ 
+ 	gt1x_i2c_client = client;
+ 
+ 	
+ 	spin_lock_init(&irq_lock);
+ 
++	resolution = getResolutionByCmdline(saved_command_line);
++	GTP_INFO("getResolutionByCmdline is %d\n", resolution);
++
+ 	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) {
+ 		GTP_ERROR("I2C check functionality failed.");
+ 		return -ENODEV;
+@@ -731,6 +776,8 @@ static int gt1x_ts_probe(struct i2c_client *client, const struct i2c_device_id *
+ 
+ #endif
+ 	gt1x_register_powermanger();
++	pr_err("gt1x probe successfully\n");
++
+ 	return 0;
+ }
+ 
+diff --git a/drivers/input/touchscreen/gt1x/gt1x.h b/drivers/input/touchscreen/gt1x/gt1x.h
+index 7b02011..53f2f26 100755
+--- a/drivers/input/touchscreen/gt1x/gt1x.h
++++ b/drivers/input/touchscreen/gt1x/gt1x.h
+@@ -21,6 +21,7 @@
+ #define _GOODIX_GT1X_H_
+ #include "gt1x_generic.h"
+ #include <linux/gpio.h>
++#include <linux/init.h>
+ #ifdef GTP_CONFIG_OF
+ #include <linux/of_gpio.h>
+ #include <linux/regulator/consumer.h>
+@@ -36,6 +37,13 @@
+ #define IIC_MAX_TRANSFER_SIZE       250
+ 
+ 
++enum lcd_resolution{
++    LCD_480P = 0,
++    LCD_720P,
++}; 
++
++
++
+ #define SCREEN_WIDTH  480
+ #define SCREEN_HEIGHT 854
+ 

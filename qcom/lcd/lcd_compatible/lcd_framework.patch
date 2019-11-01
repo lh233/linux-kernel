@@ -1,0 +1,75 @@
+diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
+index 0120057..8d94d29 100644
+--- a/services/surfaceflinger/SurfaceFlinger.cpp
++++ b/services/surfaceflinger/SurfaceFlinger.cpp
+@@ -18,6 +18,8 @@
+ #define ATRACE_TAG ATRACE_TAG_GRAPHICS
+ 
+ #include <stdint.h>
++#include <stdio.h>
++#include <string.h>
+ #include <sys/types.h>
+ #include <errno.h>
+ #include <math.h>
+@@ -140,6 +142,51 @@ const String16 sDump("android.permission.DUMP");
+ bool SurfaceFlinger::sExtendedMode = false;
+ #endif
+ 
++
++
++#define BUF_SIZE 512
++enum lcd_resolution{
++    LCD_480P = 0,
++    LCD_720P,
++};
++
++
++static int getResolutionByCmdline() {
++	char cmdline_path[BUF_SIZE] = "/proc/cmdline";
++    char buf[BUF_SIZE] = {0};
++    char resoltion_array[2][20] = {"LCD_SIZE=480p", "LCD_SIZE=720p"};
++    int i, j=0;
++    char * ret;
++	FILE* fp = fopen(cmdline_path, "r");
++	if(NULL != fp){
++         if( fgets(buf, BUF_SIZE-1, fp)== NULL ){
++             fclose(fp);
++         }
++         fclose(fp);
++	}
++
++	for(i=0; i<2; i++){
++        ALOGE("resoltion_array = %s\n", resoltion_array[j]);
++        if(((ret = strstr(buf, resoltion_array[j])) != NULL)){
++            break;
++        }
++        ALOGE("ret = %s\n", ret);
++        j++;
++	}
++
++    switch(i){
++    case LCD_480P:
++        return 213;
++        break;
++    case LCD_720P:
++        return 320;
++        break;
++    default:
++        break;
++    }
++    return 0;
++}
++
+ SurfaceFlinger::SurfaceFlinger()
+     :   BnSurfaceComposer(),
+         mTransactionFlags(0),
+@@ -587,7 +634,8 @@ status_t SurfaceFlinger::getDisplayConfigs(const sp<IBinder>& display,
+             //return getDensityFromProperty("ro.sf.lcd_density"); 
+ 	     int density=getDensityFromProperty("ro.sf.lcd_density");
+              ALOGE("ro.sf.lcd_density is ====%d,set density 213 to ro.sf.lcd_density\n",density);
+-             density=320;
++             density=getResolutionByCmdline();
++			 ALOGE("getResolutionByCmdline is ====%d added by linhao\n",density);
+              return density;	
+ 	}
+     };

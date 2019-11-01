@@ -1,0 +1,224 @@
+diff --git a/libpinservice/PinServiceSurface.cpp b/libpinservice/PinServiceSurface.cpp
+index 673131d..b7083be 100644
+--- a/libpinservice/PinServiceSurface.cpp
++++ b/libpinservice/PinServiceSurface.cpp
+@@ -57,6 +57,7 @@ PinServiceSurface::PinServiceSurface() : Thread(false)
+ 	int i;
+ 
+     mSession = new SurfaceComposerClient();
++    
+ 
+ 	pSurfaceControlBlk = NULL;
+ 	pSurfaceControlBlk = (struct surface_control_block *)::malloc(sizeof(struct surface_control_block) * MAX_IMAGE_INDEX_SUPPORT);
+@@ -100,6 +101,10 @@ PinServiceSurface::PinServiceSurface() : Thread(false)
+     //get language from system property
+     language = getLanguage();
+ 
++
++	//get lcd size
++	lcd_size = GetResolutionByCmdline();
++	
+     //read the mode from file
+     mPinModeType = 1;
+     mPinMode = 1;
+@@ -124,6 +129,43 @@ PinServiceSurface::PinServiceSurface() : Thread(false)
+     
+ }
+ 
++
++int PinServiceSurface::GetResolutionByCmdline(){
++	char cmdline_path[LCD_BUF_SIZE] = "/proc/cmdline";
++    char buf[LCD_BUF_SIZE] = {0};
++    char resoltion_array[2][20] = {"LCD_SIZE=480p", "LCD_SIZE=720p"};
++    int i, j=0;
++    char * ret;
++	FILE* fp = fopen(cmdline_path, "r");
++	if(NULL != fp){
++         if( fgets(buf, LCD_BUF_SIZE-1, fp)== NULL ){
++             fclose(fp);
++         }
++         fclose(fp);
++	}
++
++	for(i=0; i<2; i++){
++        ALOGE("resoltion_array = %s\n", resoltion_array[i]);
++        if(((ret = strstr(buf, resoltion_array[i])) != NULL)){
++            break;
++        }
++        ALOGE("ret = %s\n", ret);
++	}
++
++    switch(i){
++    case LCD_480P:
++        return 480;
++        break;
++    case LCD_720P:
++        return 720;
++        break;
++    default:
++        break;
++    }
++    return 0;
++}
++
++
+ void PinServiceSurface::setModeAndType(int mode){
+     //three  mode here
+     //mode 0 and 2 is same layout same mode type
+@@ -236,9 +278,17 @@ int PinServiceSurface::OpenAndDecodeSysBackimg()
+     }else
+ 	{
+         if(language == LAN_ZH ){
+-            sprintf(&BackimgFileName[0], "%s%d%s", SYSIMAGE_PATH, mPinMode, BACKIMG_FILENAME);
++			if(lcd_size == MARCO_720P) {
++            	sprintf(&BackimgFileName[0], "%s%d%s%s", SYSIMAGE_PATH, mPinMode, XHDPI, BACKIMG_FILENAME);
++			}else if(lcd_size == MARCO_480P) {
++				sprintf(&BackimgFileName[0], "%s%d%s%s", SYSIMAGE_PATH, mPinMode, HDPI, BACKIMG_FILENAME);
++			}
+         }else{
+-            sprintf(&BackimgFileName[0], "%s%d%s", SYSIMAGE_PATH, mPinMode, BACKIMG_FILENAME_EN);
++        	if(lcd_size == MARCO_720P) {
++            	sprintf(&BackimgFileName[0], "%s%d%s%s", SYSIMAGE_PATH, mPinMode, XHDPI, BACKIMG_FILENAME_EN);
++        	}else if(lcd_size == MARCO_480P) {
++        		sprintf(&BackimgFileName[0], "%s%d%s%s", SYSIMAGE_PATH, mPinMode, HDPI, BACKIMG_FILENAME_EN);
++        	}
+         }
+ 	}
+ 
+@@ -356,7 +406,11 @@ int PinServiceSurface::OpenAndDecodeSysAsterisk(int index)
+ 	}
+ 	else
+ 	{
+-		sprintf(&AsteriskFileName[0], "%s%d%s", SYSIMAGE_PATH, index, ASTERISK_FILENAME);
++		if(lcd_size == MARCO_720P) {
++			sprintf(&AsteriskFileName[0], "%s%d%s%s", SYSIMAGE_PATH, index, XHDPI, ASTERISK_FILENAME);
++		}else if(lcd_size == MARCO_480P) {
++			sprintf(&AsteriskFileName[0], "%s%d%s%s", SYSIMAGE_PATH, index, HDPI, ASTERISK_FILENAME);
++		}
+ 	}
+ 
+ 	fd = ::open(&AsteriskFileName[0], O_RDONLY | O_BINARY);
+@@ -605,7 +659,11 @@ void PinServiceSurface::ReadAndParseSysKeypadCfgFile(struct dime_paras_desc * p_
+ 	}
+ 	else
+ 	{
+-		sprintf(&KeypadCfgFileName[0], "%s%d%s", SYSIMAGE_PATH, mPinModeType, KEYPAD_DIMES_CFG_FILENAME);
++		if(lcd_size == MARCO_720P) { 
++			sprintf(&KeypadCfgFileName[0], "%s%d%s%s", SYSIMAGE_PATH, mPinModeType, XHDPI, KEYPAD_DIMES_CFG_FILENAME);
++		}else if(lcd_size == MARCO_480P){
++			sprintf(&KeypadCfgFileName[0], "%s%d%s%s", SYSIMAGE_PATH, mPinModeType, HDPI, KEYPAD_DIMES_CFG_FILENAME);
++		}
+ 	}
+ 
+ 	fp = fopen(&KeypadCfgFileName[0], "r");
+@@ -734,7 +792,11 @@ void PinServiceSurface::InitSysKeypad(int index)
+ 	}
+ 	else
+ 	{
+-		sprintf(&KeyPathPrefix[0], "%s%d", SYSIMAGE_PATH, index);
++		if(lcd_size == MARCO_720P){
++			sprintf(&KeyPathPrefix[0], "%s%d%s", SYSIMAGE_PATH, index, XHDPI);
++		}else if(lcd_size == MARCO_480P){
++			sprintf(&KeyPathPrefix[0], "%s%d%s", SYSIMAGE_PATH, index, HDPI);
++		}
+ 	}
+ 
+ 	offset = NextFreeOffest;
+@@ -968,6 +1030,7 @@ status_t PinServiceSurface::readyToRun()
+ {
+ 	int retval;
+ 	status_t err;
++	unsigned int w1, h1;
+ 
+     /*
+ 	retval = OpenAndDecodeSysBackimg();
+@@ -976,15 +1039,22 @@ status_t PinServiceSurface::readyToRun()
+ 		return -1;
+ 	}
+     */
++	
+ 	ALOGE("  readyToRun.\n");
+ 	struct surface_control_block * pblks = &pSurfaceControlBlk[0];
+ 
+ 	//unsigned int w1 = pblks->mBackimgWidth;
+     //unsigned int h1 = pblks->mBackimgHeight;
+-
+-	unsigned int w1 = 720; // pblks->mBackimgWidth;
+-    unsigned int h1 = 1280; //pblks->mBackimgHeight;
+-
++	if(lcd_size == MARCO_720P) {
++		w1 = 720; // pblks->mBackimgWidth;
++	    h1 = 1280; //pblks->mBackimgHeight;
++	} else if (lcd_size == MARCO_480P) {
++		w1 = 480; // pblks->mBackimgWidth;
++	    h1 = 854; //pblks->mBackimgHeight;
++	} else {
++		ALOGE(" lcd_size not fited\n");
++	}
++	ALOGE(" lcd_size is %d\n", w1);
+ 	sp<IBinder> dtoken(SurfaceComposerClient::getBuiltInDisplay(
+             ISurfaceComposer::eDisplayIdMain));
+     DisplayInfo dinfo;
+@@ -1171,7 +1241,11 @@ void PinServiceSurface::ReadAndParseSysAsterCfgFile(struct dime_paras_desc * p_a
+ 	}
+ 	else
+ 	{
+-		sprintf(&AsteriskCfgFileName[0], "%s%d%s", SYSIMAGE_PATH,mPinModeType, ASTERISK_DIMES_CFG_FILENAME);
++		if(lcd_size == MARCO_720P){
++			sprintf(&AsteriskCfgFileName[0], "%s%d%s%s", SYSIMAGE_PATH,mPinModeType, XHDPI, ASTERISK_DIMES_CFG_FILENAME);
++		}else if(lcd_size == MARCO_480P){
++			sprintf(&AsteriskCfgFileName[0], "%s%d%s%s", SYSIMAGE_PATH,mPinModeType, HDPI, ASTERISK_DIMES_CFG_FILENAME);
++		}
+ 	}
+ 
+ 	fp = fopen(&AsteriskCfgFileName[0], "r");
+diff --git a/libpinservice/PinServiceSurface.h b/libpinservice/PinServiceSurface.h
+index 103c84e..0e78cca 100644
+--- a/libpinservice/PinServiceSurface.h
++++ b/libpinservice/PinServiceSurface.h
+@@ -88,6 +88,15 @@ class SurfaceControl;
+ #define LAN_OTHERS  2
+ 
+ 
++//lcd size
++#define LCD_BUF_SIZE 512
++
++#define HDPI "/hdpi"	//480p
++#define XHDPI "/xhdpi"  //720p
++
++#define MARCO_720P 720
++#define MARCO_480P 480
++
+ /*#define NO_USE_DDI_RAND 1*/
+ #undef  NO_USE_DDI_RAND
+ 
+@@ -162,6 +171,11 @@ typedef struct surface_control_block {
+ 
+ } SurfaceControlBlock, *PSurfaceControlBlock;
+ 
++
++enum lcd_resolution{
++    LCD_480P = 0,
++    LCD_720P,
++}; 
+ // ---------------------------------------------------------------------------
+ 
+ class PinServiceSurface : public Thread, public IBinder::DeathRecipient
+@@ -231,6 +245,8 @@ public:
+ 
+ 	struct surface_control_block * pSurfaceControlBlk;
+ 
++	int lcd_size;
++
+ private:
+     virtual bool        threadLoop();
+     virtual status_t    readyToRun();
+@@ -253,6 +269,8 @@ private:
+ 
+ 	int OpenAndDecodeSysBackimg();
+ 
++	int GetResolutionByCmdline();
++
+ 	int OpenAndDecodeSysAsterisk(int index);
+ 
+ 	status_t initTexture(void* buffer, size_t len);
