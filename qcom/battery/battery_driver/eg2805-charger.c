@@ -48,9 +48,6 @@
 #include <linux/of_batterydata.h>
 #include <linux/batterydata-interface.h>
 
-#include <linux/sysfs.h>
-#include <linux/device.h>
-#include <linux/mutex.h>
 
 
 
@@ -71,6 +68,7 @@
 
 static struct class *eg2805_class;
 struct cdev *eg2805_cdev;
+extern int battery_temp;
 // Log define
 #define EG2805_INFO(fmt,arg...)           do{ if(EG2805_INFO_ON) pr_info("%s @Line:%d <<-EG2805-INFO->> "fmt"\n", __func__, __LINE__, ##arg);}while(0)
 #define EG2805_ERROR(fmt,arg...)          do{ if(EG2805_ERROR_ON) pr_err("%s @Line:%d <<-EG2805-ERROR->> "fmt"\n", __func__, __LINE__, ##arg);}while(0)
@@ -116,7 +114,7 @@ struct cdev *eg2805_cdev;
 #define UPDATE_CONFIG_SIZE 684
 
 //update verison name when update version
-#define BATTERY_CURVE_VERSION 0x02
+#define BATTERY_CURVE_VERSION 0x03
 
 #define BATTERY_UPDATE_ADDRESS 0x07A0
 enum eg2805_i2c_reg {
@@ -264,49 +262,6 @@ int eg2805_read_averagepower(void);
 static int eg2805_write_config();
 static bool eg2805_read_version();
 
-//qinchengqiang@xinguodu.com 2017.12.01 add for set reserve capacity
-int reserve_capacity = 25;
-int update_reserve_capacity_flag = 0;
-
-static DEFINE_MUTEX(reserve_capacity_lock);
-
-struct kobject *reserve_capacity_kobj;
-struct device *dev;
-static ssize_t xgd_reserve_capacity_show(struct device *dev,
-								struct device_attribute *attr, char *buf)
-{	
-	
-	return sprintf(buf,"%d\n",reserve_capacity);
-}
-	
-static ssize_t xgd_reserve_capacity_store(struct device *dev,
-								struct device_attribute *attr,const char *buf, size_t size)
-{
-	unsigned long num;
- 	if (strict_strtoul(buf, 0, &num))
-  		return -EINVAL;
- 	if (num < 0)
-  		return -EINVAL;
- 	mutex_lock(&reserve_capacity_lock);
- 	reserve_capacity = num;
- 	mutex_unlock(&reserve_capacity_lock);
-	update_reserve_capacity_flag = 1;
- 	return size;
-}
-
-static DEVICE_ATTR(mode, 0666,
-					   xgd_reserve_capacity_show,xgd_reserve_capacity_store);
-static struct attribute *reserve_capacity_attrs[] =
-{
-		&dev_attr_mode.attr,
-		NULL
-};
-static const struct attribute_group reserve_capacity_attr_grp =
-{
-		.attrs = reserve_capacity_attrs,
-};
-
-
 #if 1
 //升级代码
 static const int battery_id1_eerprom_write_addr[1024] = 
@@ -387,13 +342,13 @@ static const int battery_id1_eerprom_write_data[1024] =
 {
 	0x00, 0x00, 0x00, 0x50, 0x00, 0x19, 0x08, 0x91, 0x00, 0x00, //10
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05, 0xFF, 0xFF,
-	0xFF, 0x0E, 0x74, 0x00, 0x05, 0x09, 0xFE, 0x0C, 0xE4, 0xFF, //30
+	0xFF, 0x0E, 0x74, 0x00, 0x05, 0x09, 0xFE, 0x0C, 0x62, 0xFF, //30
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x0C, 0xD0, 0x03, 0x0C,
 	0x9E, 0x0D, 0x02, 0x03, 0x0C, 0xD0, 0x0A, 0xAA, 0x0C, 0x6C, //50
 	0x32, 0x10, 0x68, 0x00, 0x32, 0x0A, 0x78, 0x0C, 0xD0, 0x00,
 	0xFA, 0x00, 0x64, 0x64, 0x62, 0x28, 0x01, 0xf4, 0x00, 0x32,
-	0x0a, 0x06, 0x0a, 0x06, 0x25, 0x16, 0x01, 0x2c, 0x96, 0xAF, //80
-	0x4b, 0x64, 0x0c, 0xcb, 0x00, 0x01, 0xFF, 0xFF, 0xFF, 0xFF,
+	0x09, 0xc4, 0x09, 0xc4, 0x24, 0x22, 0x01, 0x2c, 0x96, 0xAF, //80
+	0x4b, 0x64, 0x0c, 0x4e, 0x00, 0x01, 0xFF, 0xFF, 0xFF, 0xFF,
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, //100
 	0x00, 0x50, 0x00, 0x50, 0x00, 0x4b, 0x00, 0x00, 0x03, 0xe8,
 	0x00, 0x00, 0x03, 0xe8, 0x03, 0xe8, 0x80, 0x80, 0x80, 0x00,
@@ -478,7 +433,8 @@ int unplug_flag = true;
 static int virtual_capacity=100;
 static int drop_soc_delta = 0;
 
-
+#define TEMP_HIGH 430
+#define TEMP_LOW 60
 
 
 
@@ -759,6 +715,9 @@ static void battery_status_check(struct eg2805_vm_bms *eg2805_bms)
 static bool is_charger_present(struct eg2805_vm_bms *eg2805_bms)
 {
 	union power_supply_propval ret = {0,};
+
+	if(battery_temp >= TEMP_HIGH || battery_temp <= TEMP_LOW)
+		return false;
 
 	if (eg2805_bms->usb_psy == NULL)
 		eg2805_bms->usb_psy = power_supply_get_by_name("usb");
@@ -1059,33 +1018,20 @@ static int eg2805_get_prop_bms_capacity(struct eg2805_vm_bms *eg2805_bms)
 	struct timeval current_time;//当前时间
 	int unplug_timeout = 0;
 	int drop_count_timeout = 0;
-	int real_capacity_eg2805=0;
+	static int last_ret;
+	static int voltage_low = 0;
+
+	//拔掉电池关机为0，低电量关机
+	voltage_low = eg2805_read_voltage(void);
+	if(voltage_low == 0)
+		return 0;
 
 	
 	ret = report_state_of_charge(eg2805_bms);
-	real_capacity_eg2805 = eg2805_read_soc();
-	if(DEBUG)
-		pr_err("real_capacity from eg2805 added by linhao = %d\n", real_capacity_eg2805);
+	real_capacity = ret;
 
-	if(real_capacity_eg2805 <= reserve_capacity) {
-		if(DEBUG)
-			pr_err("lower than reserve_capacity\n", real_capacity_eg2805);
-		ret = 0;
-		return ret;
-	}
-		
 	
 	real_charger = is_charger_present(eg2805_bms);
-
-	if((reserve_capacity >= 0) && (reserve_capacity <= 50)&&((ret -reserve_capacity) >= 0)){	
-	    ret = (int)((ret -reserve_capacity)*100/(100-reserve_capacity) + ((((ret -reserve_capacity)*10000/(100-reserve_capacity)) % 100) >40 ? 1:0));
-		real_capacity = ret;
-	    pr_debug("[%s]:get_prop_bms_capacity ret: %d\n",__FUNCTION__,ret);
-	}else{
-	    real_capacity = 0;
-	    pr_debug("set reserve capacity value is error");
-	 }
-	
 	gpio_value = gpio_get_value(CHARGING_GPIO);
 //	if(!gpio_value)
 //		charge_done_value = 0;
@@ -1095,8 +1041,8 @@ static int eg2805_get_prop_bms_capacity(struct eg2805_vm_bms *eg2805_bms)
 		charge_done_value = 0;
 	
 	if(DEBUG)
-	   pr_err("charge_done_value = %d, first_battery_full_flag = %d, real_charger : %d,capcity: %d,charge_full_flag: %d,show_real_battery: %d recharge_flag: %d, eg2805_bms->reported_soc = %d, virtual_capacity = %d, real_capcity = %d\n", charge_done_value, first_battery_full_flag, real_charger, ret, charge_full_flag,show_real_battery, recharge_flag,
-	   			eg2805_bms->reported_soc, virtual_capacity, real_capacity);
+	   pr_err("charge_done_value = %d, first_battery_full_flag = %d, real_charger : %d,capcity: %d,charge_full_flag: %d,show_real_battery: %d recharge_flag: %d, eg2805_bms->reported_soc = %d, virtual_capacity = %d\n", charge_done_value, first_battery_full_flag, real_charger, ret, charge_full_flag,show_real_battery, recharge_flag,
+	   			eg2805_bms->reported_soc, virtual_capacity);
 
 	//插着充电器第一次充满
 	 if((real_charger==true) &&(ret == 100)&&(charge_full_flag == false)){	
@@ -1164,16 +1110,14 @@ static int eg2805_get_prop_bms_capacity(struct eg2805_vm_bms *eg2805_bms)
 	//如果需要显示虚拟的值，继续上报100%
 	if(show_real_battery==false){//if charging and had chage full 
 
-		if((real_capacity_eg2805>=eg2805_bms->resume_soc && real_capacity_eg2805 < 100)){
+		if(ret>=eg2805_bms->resume_soc && ret < 100){
 			if(DEBUG)
 				EG2805_DEBUG("have plug and capacity is %d-100,show 100 level\n", eg2805_bms->resume_soc);
 			ret = 100;
 			//点亮充满的led灯,低电平亮,关闭正在充电的灯
 			
 		}else{
-			//避免降得比resume_soc快，测试中出现一次
-			//err_situation
-			if ((real_capacity_eg2805 == eg2805_bms->resume_soc-1) || (real_capacity_eg2805 == eg2805_bms->resume_soc-2) )
+			if((real_capacity == eg2805_bms->resume_soc -1) || (real_capacity == eg2805_bms->resume_soc - 2))
 				ret = 100;
 			if(DEBUG)
 				pr_err("error situation or 100%\n");
@@ -1187,7 +1131,7 @@ static int eg2805_get_prop_bms_capacity(struct eg2805_vm_bms *eg2805_bms)
 			goto end;
 		//show_real_battery为1，并且属于60s后检测到还没插入的情况
 		if(!real_charger) {
-			EG2805_DEBUG("**************Drop soc now************\n");
+			pr_err("**************Drop soc now************\n");
 			Rise_Flag = false;
 			do_gettimeofday(&drop_time); //每隔60s更新一次，直到超时
 			if(drop_soc_timeout_flag) {
@@ -1226,14 +1170,14 @@ static int eg2805_get_prop_bms_capacity(struct eg2805_vm_bms *eg2805_bms)
 			
 		}else {
 			Drop_Flag = false;
-			//这里不需要重新计时30s
-			EG2805_DEBUG("**************Rise soc now************\n");
+			//这里不需要重新计时60s，因为实际电量会根据充电电流慢慢爬升
+			pr_err("**************Rise soc now************\n");
 			//再次清零
-			if(virtual_capacity > real_capacity) {
-				ret = virtual_capacity;		//一直保持虚拟电量，直到实际电量追上来
+			if(last_ret > real_capacity) {
+				ret = last_ret;		//一直保持虚拟电量，直到实际电量追上来
 				Rise_Flag = true;
 				EG2805_DEBUG("virtual_capacity > real_capacity used the virtual_capacity is %d, real_capacity = %d\n", virtual_capacity, real_capacity);
-			}else if(virtual_capacity == real_capacity) {
+			}else if(last_ret == real_capacity) {
 				EG2805_DEBUG("virtual_capacity  == real_capacity");
 				ret = real_capacity;
 				Rise_Flag = false;
@@ -1249,7 +1193,17 @@ static int eg2805_get_prop_bms_capacity(struct eg2805_vm_bms *eg2805_bms)
 	
 end:
 	mutex_unlock(&eg2805_bms->drop_soc_lock);
-	EG2805_DEBUG("[%s]: get soc: %d ended\n",__FUNCTION__,ret);
+
+	//规避下降跳变情况，上升跳变的情况不考虑，有可能是系统更新慢
+	if(last_ret != 0 && last_ret == 100) {
+		if(last_ret - ret > 2) {
+			Drop_Flag = true;
+			pr_err("[%s]: get soc: %d, last_ret = %d ended\n",__FUNCTION__,ret, last_ret);
+			return last_ret;
+		}
+	}
+	last_ret = ret;
+	pr_err("[%s]: get soc: %d, last_ret = %d ended\n",__FUNCTION__,ret, last_ret);
 	return ret;
 }
 
@@ -1297,9 +1251,7 @@ static int eg2805_vm_bus_get_property(struct power_supply *psy,
 		val->intval = eg2805_read_voltage();
 		break;
 	case POWER_SUPPLY_PROP_TEMP:
-		rc = eg2805_read_temp();
-		if (rc < 0)
-			rc = BMS_DEFAULT_TEMP;
+		rc = battery_temp;
 		val->intval = rc;
 		break;
 //	case POWER_SUPPLY_PROP_HI_POWER:
@@ -1418,13 +1370,6 @@ static void eg2805_vm_bms_work(struct work_struct *work)
 	schedule_delayed_work(&eg2805_bms->chg_delay_work, msecs_to_jiffies(15000));	
 
 	EG2805_INFO("bms relax\n");
-
-	//qinchengqiang@xinguodu.com 2017.12.01 add for set reserve capacity
-	if(update_reserve_capacity_flag == 1){//check battery node status value whether change
-		pr_debug("battery mode have updated \n");
-		update_reserve_capacity_flag = 0; //已经触发更新
-		power_supply_changed(&eg2805_bms->bms_psy);  
-	}
 
 	
 	mutex_unlock(&eg2805_bms->icl_set_lock);
@@ -2015,8 +1960,7 @@ Output:
 *******************************************************/
 static int eg2805_driver_probe(struct i2c_client *client, const struct i2c_device_id *id)
 {
-    s32 ret = 0, err;
-	int retval = 0;
+    s32 ret = 0;
     
 	struct power_supply *usb_psy;
 
@@ -2149,17 +2093,6 @@ static int eg2805_driver_probe(struct i2c_client *client, const struct i2c_devic
 
 	if(!eg2805_read_version())
 		schedule_delayed_work(&eg2805_bms->update_battery_config_work, 0);
-
-	//qinchengqiang@xinguodu.com 2017.12.01 add for set reserve capacity
-	reserve_capacity_kobj = kobject_create_and_add("reserve_capacity", kernel_kobj);
-	if(reserve_capacity_kobj==NULL){
-		printk("kobject_create_and_add battery mode node false\n");
-		return -ENOMEM;
-	}	
-	//err = sysfs_create_group(my_battery_kobj, &battery_attr_grp);
-	err = sysfs_create_group(reserve_capacity_kobj, &reserve_capacity_attr_grp);
-	if (err)
-		printk("sysfs_create_group false err: %d\n",err);
 
 	printk("%s probe successed added by linhao\n", __func__);
 
