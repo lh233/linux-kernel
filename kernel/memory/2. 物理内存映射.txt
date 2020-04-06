@@ -1,0 +1,147 @@
+在内核使用之前，需要初始化内核的页表，初始化页表主要在map_lowmem()函数中。在映射页表之前，需要把页表的页表项清零，主要在prepare_page_table()函数中实现；
+
+start_kernel()	-->
+	setup_arch()	-->
+		paging_init()(arch/arm/mm/mmu.c)	-->
+			prepare_page_table()
+
+
+
+
+
+static inline void prepare_page_table(void)
+{
+	unsigned long addr;
+	phys_addr_t end;
+
+	/*
+	 * Clear out all the mappings below the kernel image.
+	 */
+	for (addr = 0; addr < MODULES_VADDR; addr += PMD_SIZE)
+		pmd_clear(pmd_off_k(addr));
+
+#ifdef CONFIG_XIP_KERNEL
+	/* The XIP kernel is mapped in the module area -- skip over it */
+	addr = ((unsigned long)_etext + PMD_SIZE - 1) & PMD_MASK;
+#endif
+	for ( ; addr < PAGE_OFFSET; addr += PMD_SIZE)
+		pmd_clear(pmd_off_k(addr));
+
+	/*
+	 * Find the end of the first block of lowmem.
+	 */
+	end = memblock.memory.regions[0].base + memblock.memory.regions[0].size;
+	if (end >= arm_lowmem_limit)
+		end = arm_lowmem_limit;
+
+	/*
+	 * Clear out all the kernel space mappings, except for the first
+	 * memory bank, up to the vmalloc region.
+	 */
+	for (addr = __phys_to_virt(end);
+	     addr < VMALLOC_START; addr += PMD_SIZE)	//此处end取0x8f800000，转成虚拟地址0xef800000。清除0xef800000~VMALLOC_START地址段一级页表。
+		pmd_clear(pmd_off_k(addr));
+}
+
+
+
+这里调用了三段地址来清除一级页表项的内容；
+
+- 0x0~MODULES_VADDR（Kernel module space Kernel modules inserted via insmod are placed here using dynamic mappings.）
+- MODULES_VADDR~PAGE_OFFSET（参考http://blog.chinaunix.net/uid-31377163-id-5750120.html）
+- arm_lowmem_limit~VMALLOC_START
+
+
+真正创建页表的是在map_lowmem()函数中，会从内存开始的地方覆盖到arm_lowmem_limit处。这里需要考虑kernel代码段的问题，kernel代码段从_stext开始，
+到init_end结束。以ARM Vexpress平台为例：
+
+
+static void __init map_lowmem(void)
+{
+	struct memblock_region *reg;
+	phys_addr_t kernel_x_start = round_down(__pa(_stext), SECTION_SIZE);
+	phys_addr_t kernel_x_end = round_up(__pa(__init_end), SECTION_SIZE);		//kernel_x_start=0x60000000, kernel_x_end=60800000
+
+	/* Map all the lowmem memory banks. */
+	for_each_memblock(memory, reg) {
+		phys_addr_t start = reg->base;
+		phys_addr_t end = start + reg->size;	//start=0x60000000, end=0x8f800000
+		struct map_desc map;
+
+		if (end > arm_lowmem_limit)
+			end = arm_lowmem_limit;
+		if (start >= end)
+			break;
+
+		//映射kernel image区域
+		if (end < kernel_x_start) {
+			map.pfn = __phys_to_pfn(start);		//通过物理地址获取页帧号
+			map.virtual = __phys_to_virt(start);	
+			map.length = end - start;
+			map.type = MT_MEMORY_RWX;
+
+			create_mapping(&map);
+		} else if (start >= kernel_x_end) {
+			map.pfn = __phys_to_pfn(start);
+			map.virtual = __phys_to_virt(start);
+			map.length = end - start;
+			map.type = MT_MEMORY_RW;
+
+			create_mapping(&map);
+		} else {
+			/* This better cover the entire kernel */
+			if (start < kernel_x_start) {
+				map.pfn = __phys_to_pfn(start);
+				map.virtual = __phys_to_virt(start);
+				map.length = kernel_x_start - start;
+				map.type = MT_MEMORY_RW;
+
+				create_mapping(&map);
+			}
+
+			map.pfn = __phys_to_pfn(kernel_x_start);
+			map.virtual = __phys_to_virt(kernel_x_start);
+			map.length = kernel_x_end - kernel_x_start;
+			map.type = MT_MEMORY_RWX;
+
+			create_mapping(&map);	//创建虚拟地址0xc0000000 - 0xc0800000到物理地址0x60000000 - 0x60800000的映射关系，属性为MT_MEMORY_RWX。
+			
+			//映射低端内存
+			if (kernel_x_end < end) {
+				map.pfn = __phys_to_pfn(kernel_x_end);
+				map.virtual = __phys_to_virt(kernel_x_end);
+				map.length = end - kernel_x_end;
+				map.type = MT_MEMORY_RW;
+
+				create_mapping(&map);	//创建虚拟地址0xc0800000 - 0xef800000到物理地址0x60800000 - 0x8f800000的映射关系，属性为MT_MEMORY_RW。
+			}
+		}
+	}
+}
+
+
+- 内存开始地址：0x60000000
+- _stext：0x60000000
+- _init_end：0x60800000
+- arm_lowmem_limit:0x8f800000
+
+
+其中，arm_lowmem_limit地址需要考虑的是高端内存的情况，该值的计算sanity_check_meminfo()函数中。在ARM Vexpress平台中，arm_lowmem_limit等于vmalloc_min，其定义如下：
+
+static void * __initdata vmalloc_min =
+	(void *)(VMALLOC_END - (240 << 20) - VMALLOC_OFFSET);
+phy_addr_t vmalloc_limit = __pa(vmalloc_min - 1) + 1;
+
+map_lowmem()会对两个内存区间创建映射。
+
+（1）区间一
+
+- 物理地址：0x60000000~0x60800000
+- 虚拟地址：0xc0000000~0xc0800000
+- 属性：可读、可写、可执行
+
+（2）区间二
+
+- 物理地址：0x60800000~0x8f800000
+- 虚拟地址：0xc0800000~0xef800000
+- 属性：可读、可写

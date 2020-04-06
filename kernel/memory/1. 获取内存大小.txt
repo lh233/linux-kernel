@@ -1,0 +1,72 @@
+1. 在系统启动时，ARM linux内核如何知道系统由多大的内存空间？
+
+在ARM Vexpress平台上，内存的定义在vexpress-v2p-ca9.dts文件中，该dts文件定义了内存起始地址为0x60000000，大小为0x40000000，即1GB大小的内存空间
+
+
+memory@60000000 {
+	device_type = "memory";
+	reg = <0x60000000 0x40000000>;
+};
+
+
+在内核启动阶段，需要解析这些DTS文件，实现代码在early_init_dt_scan_memroy()函数中。代码调用关系为：
+
+start_kernel()  -->
+	setup_arch()	-->
+		setup_machine_fdt()	-->
+			early_init_dt_scan_nodes	-->
+				early_init_dt_scan_memory
+
+/**
+ * early_init_dt_scan_memory - Look for an parse memory nodes
+ */
+int __init early_init_dt_scan_memory(unsigned long node, const char *uname,
+				     int depth, void *data)
+{
+	const char *type = of_get_flat_dt_prop(node, "device_type", NULL);
+	const __be32 *reg, *endp;
+	int l;
+
+	/* We are scanning "memory" nodes only */
+	if (type == NULL) {
+		/*
+		 * The longtrail doesn't have a device_type on the
+		 * /memory node, so look for the node called /memory@0.
+		 */
+		if (!IS_ENABLED(CONFIG_PPC32) || depth != 1 || strcmp(uname, "memory@0") != 0)
+			return 0;
+	} else if (strcmp(type, "memory") != 0)
+		return 0;
+
+	reg = of_get_flat_dt_prop(node, "linux,usable-memory", &l);
+	if (reg == NULL)
+		reg = of_get_flat_dt_prop(node, "reg", &l);
+	if (reg == NULL)
+		return 0;
+
+	endp = reg + (l / sizeof(__be32));
+
+	pr_debug("memory scan node %s, reg size %d, data: %x %x %x %x,\n",
+	    uname, l, reg[0], reg[1], reg[2], reg[3]);
+
+	while ((endp - reg) >= (dt_root_addr_cells + dt_root_size_cells)) {
+		u64 base, size;
+
+		base = dt_mem_next_cell(dt_root_addr_cells, &reg);
+		size = dt_mem_next_cell(dt_root_size_cells, &reg);
+
+		if (size == 0)
+			continue;
+		pr_debug(" - %llx ,  %llx\n", (unsigned long long)base,
+		    (unsigned long long)size);
+
+		early_init_dt_add_memory_arch(base, size);
+	}
+
+	return 0;
+}
+
+
+解析memory描述的信息从而得到内存的base_address和size信息，最后内存块信息通过early_init_dt_memory_arch()->memblock_add()函数增加到memblock子系统中；
+
+
