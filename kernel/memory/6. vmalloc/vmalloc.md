@@ -270,3 +270,51 @@ overflow:
 }
 ```
 
+alloc_vmap_area()在vmalloc整个空间中查找一块大小合适的并且没有人使用的空间，这段空间称为hole。注意这个参数vstart是指VMALLOC_START，vend是指VMALLOC_END。
+
+第25行代码，free_vmap_cache、cached_hole_size和cached_vstart这几个变量是在几年前增加的一个优化选项中，核心思想是从上一次查找的结果中开始查找。这里假设暂时忽略free_vmap_cache这个优化，从47行代码开始看起。
+
+查找的地址从VMALLOC_START开始，首先从vmap_area_root这颗红黑树上查找，这个红黑树里存放着系统中正在使用的vmalloc区块，遍历左子叶节点找区间地址最小区块。如果区块的开始地址等于VMALLOC_START，说明这区块是第一块vmalloc区块。如果红黑树没有一个节点，说明整个vmalloc区间都是空的，见第66行代码。
+
+第54~64行代码，这里遍历的结果是返回起始地址最小vmalloc区块，这个区块有可能是VMALLOC_START开始的，也有可能不是。
+
+然后从VMALLOC_START地址开始，查找每个已存在的vmalloc的区块的缝隙hole能否容纳目前要分配内存的大小。如果不能再已有vmalloc区块的缝隙中找到合适的hole，那么从最后一块vmalloc区块的结束地址开始一个新的vmalloc区域，见第71~83行代码。
+
+第92行代码，找到新区块hole后，调用__insert_vmap_area()函数把这个hole注册到红黑树上。
+
+```
+static void __insert_vmap_area(struct vmap_area *va)
+{
+	struct rb_node **p = &vmap_area_root.rb_node;
+	struct rb_node *parent = NULL;
+	struct rb_node *tmp;
+
+	while (*p) {
+		struct vmap_area *tmp_va;
+
+		parent = *p;
+		tmp_va = rb_entry(parent, struct vmap_area, rb_node);
+		if (va->va_start < tmp_va->va_end)
+			p = &(*p)->rb_left;
+		else if (va->va_end > tmp_va->va_start)
+			p = &(*p)->rb_right;
+		else
+			BUG();
+	}
+
+	rb_link_node(&va->rb_node, parent, p);
+	rb_insert_color(&va->rb_node, &vmap_area_root);
+
+	/* address-sort this list */
+	tmp = rb_prev(&va->rb_node);
+	if (tmp) {
+		struct vmap_area *prev;
+		prev = rb_entry(tmp, struct vmap_area, rb_node);
+		list_add_rcu(&va->list, &prev->list);
+	} else
+		list_add_rcu(&va->list, &vmap_area_list);
+}
+```
+
+回到__get_vm_area_node()函数的第16行代码上，把刚找到的struct vmap_area *va的相关信息填到struct vm_struct *vm中。
+
