@@ -399,3 +399,86 @@ fail:
 
 在__vmalloc_area_node()函数中，首先计算vmalloc分配内存大小有几个页面，然后使用alloc_page()这个API来分配物理页面，并且使用area->pages保存已分配的页面page数据结构指针，最后调用map_vm_area()函数来建立页面映射。
 
+map_vm_area()函数最后调用vmap_page_range_noflush()来建立页面映射关系。
+
+```
+static int vmap_page_range_noflush(unsigned long start, unsigned long end,
+				   pgprot_t prot, struct page **pages)
+{
+	pgd_t *pgd;
+	unsigned long next;
+	unsigned long addr = start;
+	int err = 0;
+	int nr = 0;
+
+	BUG_ON(addr >= end);
+	pgd = pgd_offset_k(addr);
+	do {
+		next = pgd_addr_end(addr, end);
+		err = vmap_pud_range(pgd, addr, next, prot, pages, &nr);
+		if (err)
+			return err;
+	} while (pgd++, addr = next, addr != end);
+
+	return nr;
+}
+```
+
+pgd_offset_k()首先从init_mm中获取指向PGD页面目录下的基地址，然后通过地址addr来找到对应的PGD表项。while循环里从开始地址addr到结束地址，按照PGDIR_SIZE的大小依次调用vmap_pud_range()来处理PGD页表。pgd_offset_k()宏定义如下：
+
+```
+#define pgd_index(addr)		((addr) >> PGDIR_SHIFT)
+#define pgd_offset(mm, addr)	((mm)->pgd + pgd_index(addr))
+#define pgd_offset_k(addr)		pgd_offset(&init_mm, addr)
+#define pgd_addr_end(addr, end)
+({		\
+	unsigned long __boundary = ((addr) + PGDIR_SIZE) & PGDIR_MASK;	\
+	(__boundary - 1 < (end) - 1) ? __boudary : (end);
+}
+)
+```
+
+vmap_pud_range()函数会依次调用vmap_pmd_range()。在ARM Vexpress平台中，页表是二级页表，所以PUD和PMD都指向PGD，最后直接调用vmap_pte_range()。
+
+```
+static int vmap_pte_range(pmd_t *pmd, unsigned long addr,
+		unsigned long end, pgprot_t prot, struct page **pages, int *nr)
+{
+	pte_t *pte;
+
+	/*
+	 * nr is a running index into the array which helps higher level
+	 * callers keep track of where we're up to.
+	 */
+
+	pte = pte_alloc_kernel(pmd, addr);
+	if (!pte)
+		return -ENOMEM;
+	do {
+		struct page *page = pages[*nr];
+
+		if (WARN_ON(!pte_none(*pte)))
+			return -EBUSY;
+		if (WARN_ON(!page))
+			return -ENOMEM;
+		set_pte_at(&init_mm, addr, pte, mk_pte(page, prot));
+		(*nr)++;
+	} while (pte++, addr += PAGE_SIZE, addr != end);
+	return 0;
+}
+```
+
+在此场景中，对应的pmd页表项内容为空，即pmd_none(*(pmd))，所以需要新分配pte页表项。
+
+```
+static inline pte_t *
+pte_alloc_one_kernel(struct mm_struct *mm, unsigned long address)
+{
+	pte_t *pte = (pte_t *)__get_free_page(PGALLOC_GFP);
+	if(pte)
+		clean_pte_table(pte);
+	return pte;
+}
+```
+
+mk_pte()宏利用刚分配的page页面和页面属性prot来新生成一个PTE entry，最后通过set_pte_at()函数把PTE entry设置到硬件页表PTE页表项中。
