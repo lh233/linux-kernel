@@ -73,4 +73,11 @@ struct vm_area_struct 数据结构各个成员的含义如下。
 - vm_next和vm_prev：进程的VMA都连接成一个链表。
 - vm_rb：VMA作为一个节点加入红黑树中，每个进程的struct mm_struct数据结构中都有这样的一颗红黑树mm->mm_rb。
 - vm_mm：指向该VMA所属的进程struct mm_struct数据结构
-- vm_page
+- vm_page_prot：VMA的访问权限
+- vm_flags：描述该VMA的一组标志位
+- anon_vma_chain和anon_vma：用于管理RMAP反向映射。
+- vm_ops：指向许多方法的集合，这些方法用于在VMA中执行各种操作，通常用于文件映射。
+- vm_pgoff：指定文件映射的偏移量，这个变量的单位不是Byte，而是页面的大小（PAGE_SIZE）。对于匿名页面来说，它的值可以是0或者是vm_addr/PAGE_SIZE；
+- vm_file：指向file的实例。描述一个被映射的文件。
+
+struct mm_struct数据结构是描述进程内存管理的核心数据结构，该数据结构也提供了管理VMA所需要的信息
