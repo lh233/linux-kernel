@@ -80,4 +80,20 @@ struct vm_area_struct 数据结构各个成员的含义如下。
 - vm_pgoff：指定文件映射的偏移量，这个变量的单位不是Byte，而是页面的大小（PAGE_SIZE）。对于匿名页面来说，它的值可以是0或者是vm_addr/PAGE_SIZE；
 - vm_file：指向file的实例。描述一个被映射的文件。
 
-struct mm_struct数据结构是描述进程内存管理的核心数据结构，该数据结构也提供了管理VMA所需要的信息
+struct mm_struct数据结构是描述进程内存管理的核心数据结构，该数据结构也提供了管理VMA所需要的信息，这些信息概况如下：
+
+```
+[include/linux/mm_types.h]
+struct mm_struct {
+	struct vm_area_struct *mmap;
+	struct rb_root mm_rb;
+	.....
+}
+```
+
+每个VMA都要连接到mm_struct中的链表和红黑树中，以方便查找。
+
+- mmap形成一个单链表，进程中所有VMA都链接到这个链表中，链表头mm_struct->mmap。
+- mm_rb是红黑树的根节点，每个进程都有一颗VMA的红黑树。
+
+VMA按照起始地址以递增的方式插入mm_struct->mmap链表中。当进程拥有大量VMA时，扫描链表和查找特定的VMA是非常低效的操作，例如在云计算的机器中，内核中通常要靠红黑树来协助，以便提高查找速度。
