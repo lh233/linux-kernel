@@ -482,3 +482,4 @@ pte_alloc_one_kernel(struct mm_struct *mm, unsigned long address)
 ```
 
 mk_pte()宏利用刚分配的page页面和页面属性prot来新生成一个PTE entry，最后通过set_pte_at()函数把PTE entry设置到硬件页表PTE页表项中。
+
