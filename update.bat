@@ -1,9 +1,9 @@
 @echo off
-@title bat 交互执行git 提交命令
+@title bat 交互执行git 每日提交命令
 F:
 cd F:\project\mygithub\linux-kernel
-git status .
-git add .
-git commit -m update
-git push origin master
+E:\publicsoftware\Git\bin\git.exe status .
+E:\publicsoftware\Git\bin\git.exe add .
+E:\publicsoftware\Git\bin\git.exe commit -m update
+E:\publicsoftware\Git\bin\git.exe push origin master
 pause
