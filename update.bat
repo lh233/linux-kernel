@@ -2,8 +2,19 @@
 @title bat 交互执行git 每日提交命令
 F:
 cd F:\project\mygithub\linux-kernel
-E:\publicsoftware\Git\bin\git.exe status .
-E:\publicsoftware\Git\bin\git.exe add .
-E:\publicsoftware\Git\bin\git.exe commit -m update
-E:\publicsoftware\Git\bin\git.exe push origin master
-pause
+git status .
+git add .
+@set /p option="please input y/n to commit??:" 
+
+if "%option%" == "y" (
+	 @set /p commitinfo="Please input commit info:"
+	 echo %commitinfo%
+	 git commit
+	 git push origin master
+) 
+
+if "%option%" == "n" (
+	@echo "git commit nothing"
+	pause
+) 
+  
