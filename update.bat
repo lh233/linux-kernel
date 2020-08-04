@@ -7,8 +7,6 @@ git add .
 @set /p option="please input y/n to commit??:" 
 
 if "%option%" == "y" (
-	 @set /p commitinfo="Please input commit info:"
-	 echo %commitinfo%
 	 git commit
 	 git push origin master
 ) 
