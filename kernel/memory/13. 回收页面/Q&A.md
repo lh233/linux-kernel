@@ -1,0 +1,5 @@
+- kswapd内核线程何时会被唤醒？
+- LRU链表如何知道page的活动频繁程度？
+- kswapd按照什么原则来换出页面？
+- kswapd 按照什么方向来扫描zone?
+- kswapd以什么标准来退出扫描LRU?
