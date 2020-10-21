@@ -3,3 +3,9 @@
 - kswapd按照什么原则来换出页面？
 - kswapd 按照什么方向来扫描zone?
 - kswapd以什么标准来退出扫描LRU?
+- 手持设备例如Android系统，没有swap分区或者swap文件，kswapd会扫描匿名页面LRU吗？
+- swappiness的含义是什么？kswapd如何计算匿名页面和page cache之间的扫描比重？
+- 当系统中充斥着大量只访问一次的文件访问（use-one streaming IO）时，kswapd如何来规避这种风暴？
+- 在回收page cache时，对于dirty的page cache,kswapd会马上回写吗？
+- 内核中有哪些页面会被kswapd写回交换分区?
+
