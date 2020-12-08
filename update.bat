@@ -6,6 +6,9 @@ git pull
 git status .
 git add .
 git status .
+git config --global user.name "lh233"
+git config --global user.email "490095224@qq.com"
+
 @set /p option="please input y/n to commit??:" 
 
 if "%option%" == "y" (
