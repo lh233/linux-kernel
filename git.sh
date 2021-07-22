@@ -1,6 +1,6 @@
 #!/bin/bash
 project_path="/home/narwal/study/linux-kernel/"
-echo $(project_path) > /home/narwal/study/linux-kernel/1.log
+echo $project_path > /home/narwal/study/linux-kernel/1.log
 cd $project_path
 git add $project_path*
 git commit -m 'update'
