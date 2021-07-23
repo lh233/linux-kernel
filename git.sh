@@ -2,7 +2,7 @@
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
 export PATH
 project_path="/home/narwal/study/linux-kernel/"
-project_date="`date +%y%m%d`"
+project_date="`date +"update time:%Y-%m-%d %H:%M:%S`"
 cd $project_path
 git pull origin master
 git add $project_path*
