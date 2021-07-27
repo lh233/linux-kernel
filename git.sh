@@ -6,7 +6,7 @@ project_date="`date +"update time:%Y-%m-%d %H:%M:%S"`"
 cd $project_path
 echo "update" > $project_path/update.log
 git pull origin master
-git add $project_path*
+git add .
 git commit -m 'update....'
 git push origin master
 echo "update end " >> $project_path/update.log
