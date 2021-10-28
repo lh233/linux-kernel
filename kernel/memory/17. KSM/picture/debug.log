@@ -3,3 +3,4 @@
 [1023/030139.780:INFO:crash_reporting.cc(219)] Crash reporting enabled for process: gpu-process
 [1023/030140.062:INFO:crash_reporting.cc(219)] Crash reporting enabled for process: utility
 [1023/030340.116:INFO:crash_reporting.cc(219)] Crash reporting enabled for process: gpu-process
+[1027/201808.013:INFO:crash_reporting.cc(219)] Crash reporting enabled for process: utility
