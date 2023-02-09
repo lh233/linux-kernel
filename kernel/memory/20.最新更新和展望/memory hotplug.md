@@ -62,3 +62,17 @@ virsh attach-device <vm name> <xml filename> --config --live
 
 -   make hotplug memory online
     -   online manully
+
+```
+  for i in `grep -l offline         /sys/devices/system/memory/memory*/state`
+  do 
+  echo online > $i 
+  done
+```
+
+-   hotplug udev rule
+
+```
+  ACTION=="add", SUBSYSTEM=="memory", ATTR{state}="online"
+```
+
