@@ -89,3 +89,29 @@ EXPORT_SYMBOL(init_task);
 }
 ```
 
+init_task进程的task_struct数据结构中stack成员指向thread_info数据结构。通常内核栈大小是8KB，即两个物理页面的大小，它存放在内核映像文件中 data 段中，在编译链接时预先分配好，具体见arch/arm/kernel/vmlinux.lds.S链接文件。
+
+```
+[arch/ arm/kerne1/ vmlinux.lds.s]
+SECTIONS
+{
+...
+.data : AT(__data_loc)
+{
+	_data = .;
+	/*address in memory */
+	_sdata = .;
+    /*
+    *first, the init task union,aligned*to an 8192 byte boundary .
+    */
+	INIT_TASK_DATA(THREAD_SIZE)
+	…
+	edata = .;
+)
+[arch/arm/include/asm/thread_info.h]
+#define THREAD_SIZE_ORDER 1
+#define THREAD_SIZE (PAGE_SIZE << THREAD_SIZE_ORDER)
+#define THREAD_START_SP (THREAD_SIZE -8)
+
+```
+
