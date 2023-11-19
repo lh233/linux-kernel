@@ -113,5 +113,99 @@ SECTIONS
 #define THREAD_SIZE (PAGE_SIZE << THREAD_SIZE_ORDER)
 #define THREAD_START_SP (THREAD_SIZE -8)
 
+[include/asm-generic/vmlinux.lds.h]
+#define INIT_TASK_DATA(align)
+		= ALIGN(align) ;
+		* ( .data..init_task)
 ```
 
+由链接文件可以看到 data 段预留了8KB 的空间用于内核栈，存放在 data段的"“.data..init_task”中。_init task _data宏会直接读取“.data..init_task”段内存，并且存放了一个thread union 联合数据结构，从联合数据结构可以看出其分布情况:开始的地方存放了struct thread_info数据结构，顶部往下的空间用于内核栈空间。
+
+```
+[inc1ude/1inux/init_task.h]
+/* Attach to the init task data structure for proper alignment */
+#define_init_task_data _attribute_((_section__( ".data..init_task")))
+[inc1ude/1inux/init_task.h]
+union thread_union init_thread_union _init_task_data =
+									 {INIT_THREAD_INFO(init_task) };
+[include/1inux/sched.h]
+union thread_union {
+	struct thread_info thread_info;
+	unsigned long stack[THREAD_SIZE/sizeof(long)];
+};
+```
+
+> 内核栈大小通常和体系结构相关，ARM32 架构中内核栈大小是8KB
+> ARM64架构中内核栈大小是16KB。
+
+```
+[arch/arm/inc1ude/asm/thread_info.h]
+#define INIT_THREAD_ INFO(tsk)  \
+{								\
+	.task = &tsk,
+	.exec_domain = &default_exec_domain,	\
+	.flags = 0,					\
+	.preempt_count = INIT_PREEMPT_COUNT,	\
+	.addr_limit= KERNEL_DS，					\
+	.cpu_domain = domain_val(DOMAIN_USER, DOMAIN_MANAGER) | 	\
+				domain_val(DOMAIN_KERNEL， DOMAIN_MANAGER) |		\
+				domain_val (DOMAIN_IO，DOMAIN_CLIENT),			\
+}
+```
+
+\__init_task_data存放在".data..init_task"段中，\___init_task_data声明为thread_union类型,thread_union类型描述了整个内核栈stack[]，栈的最下面存放struct thread_info数据结构，因此也 \_init_task_data通过 INIT_THREAD_INFO宏来初始化 struct thread_info数据结构。init进程的task_struct数据结构通过INIT_TASK宏来初始化。
+
+ARM32处理器从汇编代码跳转到C语言的入口点在 start_kernel()函数之前,设置了SP寄存器指向8KB内核栈顶部区域(要预留8Byte的空洞)。
+
+```
+[arch/arm/kerne1/head-common.S]
+__mmap_switched:
+	adr r3,__mmap_switched_data
+	...
+	ldmia r3!,{r4, r5, r6, r7}
+	ARM( ldmia r3,  {r4, r5, r6, r7, sp} )
+	...
+	b start_kernel
+ENDPROC (__mmap_switched)
+	.align 2
+	.type __mmap_switched_data,%object
+__mmap_switched_data:
+	.long __data_loc @r4
+	.long _sdata	 @r5
+	.long __bss_start @ r6
+	.long _end		@ r7
+	.long processor_id  @r4
+	.long __machine_arch_type @r5
+	.long __atags_pointer @r6
+#ifdef CONFIG_CPU_CP15
+	.long cr_alignment	@r7
+#else
+	.long 0	@r7
+#endif
+	.long init_thread_uint + THREAD_START_SP @sp
+	.size __map_switched_data, .- __mmap_switched_data
+
+[arch/arm/include/asm/thread_info.h]
+#define THREAD_START_SP		(THREAD_SIZE - 8)
+```
+
+在汇编代码\__mmap_switched标签处设置相关的r3～r7以及SP寄存器，其中，SP寄存器指向 data段预留的 8KB空间的顶部（8KB-8)，然后跳转到start_kernel()。\_\_mmap_switched_data 标签处定义了r4 ~ sp寄存器的值。相当于一个表，通过adr指令把这表读取r3寄存器中，然后在通过ldmia指令写入相应寄存器中。
+
+
+
+内核有一个常用的常量current用于获取当前进程task_struct数据结构，它利用了内核栈的特性。首先通过SP寄存器获取当前内核栈的地址，对齐后可以获取 struct thread _info数据结构指针，最后通过thread info->task成员获取 task_struct数据结构。如图3.1所示是Linux内核栈的结构图。
+
+```
+[include/asm-generic/ current.h]
+#define get_current()  (current_thread_info()->task)
+#define current get_current()
+
+[arch/arm/include/asm/thread_info.h]
+register unsigned long current_stack_pointer asm ("sp" );
+static inline struct thread_info *current_thread_info(void)
+{
+	return (struct thread_info *)(current_stack_pointer &~(THREAD_SIZE - 1));
+}
+```
+
+![](./picture/内核栈.png))
